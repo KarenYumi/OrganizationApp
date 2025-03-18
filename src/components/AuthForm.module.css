@@ -1,0 +1,80 @@
+.form {
+  padding-top: 1rem;
+  max-width: 40rem;
+  margin: 2rem auto;
+}
+
+.form label,
+.form input,
+.form textarea {
+  display: block;
+  width: 100%;
+  margin-top: 1rem;
+  border: #fff;
+  border-radius: 3px;
+}
+
+.form h1{
+  font-size: 2rem;
+  font-family: 'Lato', sans-serif;
+  margin-top: 0;
+  margin-bottom: 2rem;
+  color: #2f82ff;
+}
+
+.form {
+  width: 40rem;
+  margin: 2rem auto;
+  background-color: #e1e6f0;
+  border-radius: 8px;
+  overflow: hidden;
+  padding: 2rem;
+}
+
+
+.form p{
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+}
+
+.form input,
+.form textarea {
+  font: inherit;
+  padding: 0.25rem;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.actions button {
+  font: inherit;
+  cursor: pointer;
+  padding: 0.5rem 1.5rem;
+  border: none;
+  background-color: #2f82ff;
+  color: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.26);
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.actions a {
+  text-decoration: none;
+  background-color: transparent;
+  color: var(--color-gray-300);
+}
+
+.actions button:hover {
+  background-color: #2066cf;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.26);
+}
+
+.actions a:hover {
+  background-color: var(--color-gray-800);
+}

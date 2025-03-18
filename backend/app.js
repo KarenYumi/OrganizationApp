@@ -2,11 +2,21 @@ import fs from 'node:fs/promises';
 
 import bodyParser from 'body-parser';
 import express from 'express';
+import cors from 'cors';
+import * as authRoutes from './routes/auth.js'; 
 
 const app = express();
 
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['X-Requested-With', 'Content-Type'],
+}));
+
 app.use(bodyParser.json());
 app.use(express.static('public'));
+
+app.use(authRoutes);
 
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -18,6 +28,9 @@ app.use((req, res, next) => {
     'Access-Control-Allow-Headers',
     'X-Requested-With,content-type'
   );
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
   next();
 });
 
@@ -71,7 +84,6 @@ app.get('/events/:id', async (req, res) => {
 });
 
 app.post('/events', async (req, res) => {
-  console.log("📥 Dados recebidos pelo backend:", req.body);
 
   const { event } = req.body;
 
@@ -169,3 +181,4 @@ app.delete('/events/:id', async (req, res) => {
 app.listen(3000, () => {
   console.log('Server running on port 3000');
 });
+

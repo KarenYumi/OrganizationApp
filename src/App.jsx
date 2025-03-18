@@ -10,11 +10,17 @@ import EventDetails from './components/Events/EventDetails.jsx';
 import NewEvent from './components/Events/NewEvent.jsx';
 import EditEvent, {loader as editEventLoader} from './components/Events/EditEvent.jsx';
 import { queryClient } from './components/util/http.js';
+import AuthenticationPage, {action as authAction} from './components/Authentication.jsx';
 
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <Navigate to="/events" />,
+    element: <Navigate to="/auth" />,
+  },
+  {
+    path: '/auth',
+    element: <AuthenticationPage />,
+    action: authAction
   },
   {
     path: '/events',
