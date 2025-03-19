@@ -10,7 +10,8 @@ const app = express();
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['X-Requested-With', 'Content-Type'],
+  allowedHeaders: ['Access-Control-Allow-Headers','X-Requested-With', 'Content-Type'],
+  
 }));
 
 app.use(bodyParser.json());
@@ -84,7 +85,6 @@ app.get('/events/:id', async (req, res) => {
 });
 
 app.post('/events', async (req, res) => {
-
   const { event } = req.body;
 
   if (!event) {
@@ -99,6 +99,7 @@ app.post('/events', async (req, res) => {
     !event.address?.trim() ||
     !event.status?.trim()
   ) {
+    console.log('Invalid event dataaaa:', event);
     return res.status(400).json({ message: 'Invalid data provided.' });
   }
 
@@ -121,6 +122,8 @@ app.put('/events/:id', async (req, res) => {
   const { id } = req.params;
   const { event } = req.body;
 
+  console.log(req.body);
+
   if (!event) {
     return res.status(400).json({ message: 'Event is required' });
   }
@@ -133,6 +136,7 @@ app.put('/events/:id', async (req, res) => {
     !event.address?.trim() ||
     !event.status?.trim()
   ) {
+    console.log('Invalid event data:', event);
     return res.status(400).json({ message: 'Invalid data provided.' });
   }
 

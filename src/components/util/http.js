@@ -89,7 +89,7 @@ export async function deleteEvent({ id }) {
 export async function updateEvent({ id, event }) {
   const response = await fetch(`http://localhost:3000/events/${id}`, {
     method: 'PUT',
-    body: JSON.stringify({ event }),
+    body: JSON.stringify( event ), //perguntar se pd haver algum erro nesta parte, estava assim {event}, ai tirei pq ele tava duplicando event ai n batia com o back
     headers: {
       'Content-Type': 'application/json',
     },

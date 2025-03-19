@@ -63,6 +63,7 @@ export default function EventForm({ inputData, onSubmit, children }) {
         />
       </p>
 
+      
       <label htmlFor="status">Status</label>
       <select name="status" id="status" >
         <option value="A fazer">A fazer</option>

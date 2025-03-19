@@ -41,6 +41,7 @@ export default function EditEvent() {
       id: params.id,
       event: formData
     });
+    console.log("handle submit:", formData);
     navigate("../");
   }
 

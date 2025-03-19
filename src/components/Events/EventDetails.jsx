@@ -73,7 +73,7 @@ export default function EventDetails() {
       month: 'short',
       year: 'numeric',
     })
-    : "Data não disponível";
+    : "";
 
   const statusClass = `event-item-status ${
     data?.status === "Pendente"
