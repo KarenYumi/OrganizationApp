@@ -23,23 +23,24 @@ const router = createBrowserRouter([
     action: authAction,
   },
   {
-    path: 'events',
+    path: '/events',
     element: <Events />,
+
     children: [
       {
-        path: 'new',
+        path: '/events/new',
         element: <NewEvent />,
       },
+    ],
+  },
+  {
+    path: '/events/:id',
+    element: <EventDetails />,
+    children: [
       {
-        path: ':id',
-        element: <EventDetails />,
-        children: [
-          {
-            path: 'edit',
-            element: <EditEvent />,
-            loader: editEventLoader,
-          },
-        ],
+        path: '/events/:id/edit',
+        element: <EditEvent />,
+        loader: editEventLoader,
       },
     ],
   },
