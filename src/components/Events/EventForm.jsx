@@ -1,11 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function EventForm({ inputData, onSubmit, children }) {
+  const [status, setStatus] = useState(inputData?.status ?? '');
+
+  useEffect(() => {
+    setStatus(inputData?.status ?? '');
+  }, [inputData]);
+
   function handleSubmit(event) {
     event.preventDefault();
 
     const formData = new FormData(event.target);
     const data = Object.fromEntries(formData);
+
+    data.status = status;
 
     onSubmit({ event: data });
   }
@@ -63,9 +71,13 @@ export default function EventForm({ inputData, onSubmit, children }) {
         />
       </p>
 
-      
       <label htmlFor="status">Status</label>
-      <select name="status" id="status" >
+      <select
+        name="status"
+        id="status"
+        value={status} 
+        onChange={(e) => setStatus(e.target.value)}
+      >
         <option value="A fazer">A fazer</option>
         <option value="Pendente">Pendente</option>
         <option value="Pronto">Pronto</option>
