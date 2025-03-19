@@ -1,22 +1,23 @@
-import { sign, verify } from 'jsonwebtoken';
+import pkg from 'jsonwebtoken';
+const { sign, verify } = pkg;
 import { compare } from 'bcryptjs';
 import { NotAuthError } from './errors.js';
 
 const KEY = 'supersecret';
 
-function createJSONToken(email) {
+export function createJSONToken(email) {
   return sign({ email }, KEY, { expiresIn: '1h' });
 }
 
-function validateJSONToken(token) {
+export function validateJSONToken(token) {
   return verify(token, KEY);
 }
 
-function isValidPassword(password, storedPassword) {
+export function isValidPassword(password, storedPassword) {
   return compare(password, storedPassword);
 }
 
-function checkAuthMiddleware(req, res, next) {
+export function checkAuth(req, res, next) {
   if (req.method === 'OPTIONS') {
     return next();
   }
@@ -41,7 +42,4 @@ function checkAuthMiddleware(req, res, next) {
   next();
 }
 
-exports.createJSONToken = createJSONToken;
-exports.validateJSONToken = validateJSONToken;
-exports.isValidPassword = isValidPassword;
-exports.checkAuth = checkAuthMiddleware;
+

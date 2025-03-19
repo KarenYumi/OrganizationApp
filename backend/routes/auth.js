@@ -1,5 +1,5 @@
 import express from 'express';
-import { add, get } from'../data/user.js';
+import { addUser, getUserByEmail } from'../data/user.js';
 import { createJSONToken, isValidPassword } from'../util/auth.js';
 import { isValidEmail, isValidText } from'../util/validation.js';
 
@@ -13,7 +13,7 @@ router.post('/signup', async (req, res, next) => {
     errors.email = 'Invalid email.';
   } else {
     try {
-      const existingUser = await get(data.email);
+      const existingUser = await getUserByEmail(data.email);
       if (existingUser) {
         errors.email = 'Email exists already.';
       }
@@ -32,7 +32,7 @@ router.post('/signup', async (req, res, next) => {
   }
 
   try {
-    const createdUser = await add(data);
+    const createdUser = await addUser(data);
     const authToken = createJSONToken(createdUser.email);
     res
       .status(201)
@@ -48,7 +48,7 @@ router.post('/login', async (req, res) => {
 
   let user;
   try {
-    user = await get(email);
+    user = await getUserByEmail(email);
   } catch (error) {
     return res.status(401).json({ message: 'Authentication failed.' });
   }
@@ -65,4 +65,4 @@ router.post('/login', async (req, res) => {
   res.json({ token });
 });
 
-module.exports = router;
+export default router;

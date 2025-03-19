@@ -1,34 +1,41 @@
-const { hash } = require('bcryptjs');
-const { v4: generateId } = require('uuid');
+import { hash } from 'bcryptjs';
+import { v4 as generateId } from 'uuid';
 
-const { NotFoundError } = require('../util/errors');
-const { readData, writeData } = require('../util');
+import { NotFoundError } from '../util/errors.js';
+import { readData, writeData } from './util.js';
 
-async function add(data) {
+// Função para adicionar um novo usuário
+export async function addUser(data) {
   const storedData = await readData();
   const userId = generateId();
   const hashedPw = await hash(data.password, 12);
+
   if (!storedData.users) {
     storedData.users = [];
   }
-  storedData.users.push({ ...data, password: hashedPw, id: userId });
+
+  storedData.users.push({ 
+    id: userId, 
+    email: data.email, 
+    password: hashedPw 
+  });
+
   await writeData(storedData);
   return { id: userId, email: data.email };
 }
 
-async function get(email) {
+// Função para buscar um usuário pelo e-mail
+export async function getUserByEmail(email) {
   const storedData = await readData();
+
   if (!storedData.users || storedData.users.length === 0) {
-    throw new NotFoundError('Could not find any users.');
+    throw new NotFoundError('No users found.');
   }
 
-  const user = storedData.users.find((ev) => ev.email === email);
+  const user = storedData.users.find((u) => u.email === email);
   if (!user) {
-    throw new NotFoundError('Could not find user for email ' + email);
+    throw new NotFoundError('User not found for email: ' + email);
   }
 
   return user;
 }
-
-exports.add = add;
-exports.get = get;

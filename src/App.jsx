@@ -8,39 +8,38 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import Events from './components/Events/Events.jsx';
 import EventDetails from './components/Events/EventDetails.jsx';
 import NewEvent from './components/Events/NewEvent.jsx';
-import EditEvent, {loader as editEventLoader} from './components/Events/EditEvent.jsx';
+import EditEvent, { loader as editEventLoader } from './components/Events/EditEvent.jsx';
 import { queryClient } from './components/util/http.js';
-import AuthenticationPage, {action as authAction} from './components/Authentication.jsx';
+import AuthenticationPage, { action as authAction } from './components/Authentication.jsx';
 
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <Navigate to="/auth" />,
+    element: <Navigate to="/auth?mode=login" replace />, // Redireciona para a URL correta com `mode=login`
   },
   {
-    path: '/auth',
+    path: 'auth',
     element: <AuthenticationPage />,
-    action: authAction
+    action: authAction,
   },
   {
-    path: '/events',
+    path: 'events',
     element: <Events />,
-
     children: [
       {
-        path: '/events/new',
+        path: 'new',
         element: <NewEvent />,
       },
-    ],
-  },
-  {
-    path: '/events/:id',
-    element: <EventDetails />,
-    children: [
       {
-        path: '/events/:id/edit',
-        element: <EditEvent />,
-        loader: editEventLoader,
+        path: ':id',
+        element: <EventDetails />,
+        children: [
+          {
+            path: 'edit',
+            element: <EditEvent />,
+            loader: editEventLoader,
+          },
+        ],
       },
     ],
   },
