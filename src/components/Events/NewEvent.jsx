@@ -19,8 +19,6 @@ export default function NewEvent() {
   });
 
   function handleSubmit(formData) {
-    console.log("Enviando evento:", formData); // 👀 Verificar antes de enviar
-    
     mutate(formData);
   }
   

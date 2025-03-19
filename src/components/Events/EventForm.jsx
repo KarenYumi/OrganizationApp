@@ -6,9 +6,8 @@ export default function EventForm({ inputData, onSubmit, children }) {
 
     const formData = new FormData(event.target);
     const data = Object.fromEntries(formData);
-    const eventData = {...data, status: 'Pendente'};
 
-    onSubmit({event: eventData});
+    onSubmit({ event: data });
   }
 
   return (
@@ -63,6 +62,15 @@ export default function EventForm({ inputData, onSubmit, children }) {
           defaultValue={inputData?.address ?? ''}
         />
       </p>
+
+      <label htmlFor="status">Status</label>
+      <select name="status" id="status" >
+        <option value="A fazer">A fazer</option>
+        <option value="Pendente">Pendente</option>
+        <option value="Pronto">Pronto</option>
+        <option value="Entregue">Entregue</option>
+        <option value="Cancelado">Cancelado</option>
+      </select>
 
       <p className="form-actions">{children}</p>
     </form>
