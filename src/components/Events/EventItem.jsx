@@ -30,7 +30,7 @@ export default function EventItem({ event }) {
         <p>
           <p className={statusClass}>{event.status}</p>
           <Link to={`/events/${event.id}`} className="button-item">
-            View Details
+            Detalhes
           </Link>
         </p>
       </div>

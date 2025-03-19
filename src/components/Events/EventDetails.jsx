@@ -51,7 +51,7 @@ export default function EventDetails() {
   if (isPending) {
     content = (
       <div id="event-details-content" className="center">
-        <p>Fetching event data...</p>
+        <p>Buscando os dados...</p>
       </div>
     );
   }
@@ -93,8 +93,8 @@ export default function EventDetails() {
         <header>
           <h1>{data.title}</h1>
           <nav>
-            <button onClick={handleStartDelete}>Delete</button>
-            <Link to="edit">Edit</Link>
+            <button onClick={handleStartDelete}>Deletar</button>
+            <Link to="edit">Editar</Link>
           </nav>
         </header>
         <div id="event-details-content">
@@ -117,10 +117,10 @@ export default function EventDetails() {
     <>
       {isDeleting && (
         <Modal onClose={handleStopDelete}>
-          <h2>Are you sure?</h2>
-          <p> do you really qant to delelte? This action cannot be undone</p>
+          <h2>Tem certeza?</h2>
+          <p>Você realmente quer deletar esse pedido? Essa ação não pode ser desfeita</p>
           <div className='form-actions'>
-            {isPendingDeletion && <p>Deleting, please wait</p>}
+            {isPendingDeletion && <p>Deletando....</p>}
             {!isPendingDeletion && (
               <>
                 <button onClick={handleStopDelete} className='button-text'>Cancel</button>
@@ -134,7 +134,7 @@ export default function EventDetails() {
       <Outlet />
       <Header>
         <Link to="/events" className="nav-item">
-          View all Events
+          Todos os Pedidos
         </Link>
       </Header>
       <article id="event-details">
