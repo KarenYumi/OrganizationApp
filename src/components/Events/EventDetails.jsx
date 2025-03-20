@@ -6,7 +6,7 @@ import Header from '../Header.jsx';
 import { deleteEvent, fetchEvent, queryClient } from '../util/http.js';
 import ErrorBlock from '../UI/ErrorBlock.jsx';
 import Modal from '../UI/Modal.jsx';
-import Kanban from '../Kanban.jsx';
+import Kanban from '../Kanban/Kanban.jsx';
 
 export default function EventDetails() {
   const [isDeleting, setIsDeleting] = useState(false);

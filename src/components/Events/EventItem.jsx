@@ -27,12 +27,12 @@ export default function EventItem({ event }) {
           <p className="event-item-date">{formattedDate}</p>
           <p className="event-item-description">{event.description}</p>
         </div>
-        <p>
+        <div>
           <p className={statusClass}>{event.status}</p>
           <Link to={`/events/${event.id}`} className="button-item">
             Detalhes
           </Link>
-        </p>
+        </div>
       </div>
     </article>
   );
