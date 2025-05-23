@@ -4,6 +4,29 @@
   margin: 2rem auto;
 }
 
+.inputError {
+  border: 2px solid #e74c3c;
+  background-color: #fdf2f2;
+}
+
+.errorText {
+  color: #e74c3c;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.error {
+  background-color: #fdf2f2;
+  border: 1px solid #e74c3c;
+  border-radius: 4px;
+  color: #e74c3c;
+  width: 20rem;
+  display: flex;
+  margin: auto;
+  justify-content: center;
+}
+
 .form label,
 .form input,
 .form textarea {
