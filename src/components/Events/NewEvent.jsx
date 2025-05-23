@@ -13,7 +13,7 @@ export default function NewEvent() {
   const { mutate, isPending, isError, error } = useMutation({
     mutationFn: createNewEvent,
     onSuccess: () => {
-      queryClient.invalidateQueries({queryKey: ["events"]}); //marca como não updated e depoi faz o refetch
+      queryClient.invalidateQueries({ queryKey: ["events"] }); //marca como não updated e depoi faz o refetch
       navigate("/events");
     }
   });
@@ -21,10 +21,16 @@ export default function NewEvent() {
   function handleSubmit(formData) {
     mutate(formData);
   }
-  
+
 
   return (
     <Modal onClose={() => navigate('../')}>
+      {isError && (
+        <ErrorBlock
+          title="falha ao criar o evento"
+          message={error.info?.message || "Falha ao criar o evento. Porfavor verificar se todas as caixas estão preenchidas"}
+        />
+      )}
       <EventForm onSubmit={handleSubmit}>
         {isPending && "Submitting.."}
         {!isPending && (
@@ -38,12 +44,7 @@ export default function NewEvent() {
           </>
         )}
       </EventForm>
-      {isError && (
-        <ErrorBlock
-          title="falha ao criar o evento"
-          message={error.info?.message || "Falha ao criar o evento. Porfavor verificar se todas as caixas estão preenchidas"}
-        />
-      )}
+
     </Modal>
   );
 }

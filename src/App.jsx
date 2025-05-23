@@ -10,12 +10,12 @@ import EventDetails from './components/Events/EventDetails.jsx';
 import NewEvent from './components/Events/NewEvent.jsx';
 import EditEvent, { loader as editEventLoader } from './components/Events/EditEvent.jsx';
 import { queryClient } from './components/util/http.js';
-import AuthenticationPage, { action as authAction } from './components/Authentication.jsx';
+import AuthenticationPage, { action as authAction } from './components/Login/Authentication.jsx';
 
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <Navigate to="/auth?mode=login" replace />, // Redireciona para a URL correta com `mode=login`
+    element: <Navigate to="/auth?mode=login" replace />,
   },
   {
     path: 'auth',

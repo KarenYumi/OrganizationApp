@@ -13,10 +13,6 @@ export default function Kanban() {
   }
 
   function createNewColumn() {
-    if (columns.length >= 6) {
-      setMessage("Limite máximo de 6 colunas atingido!");
-      return;
-    }
     const columntoAdd = {
       id: generateId(),
       title: `Column ${columns.length + 1}`
@@ -34,12 +30,12 @@ export default function Kanban() {
   return (
     <div className='kanbann'>
       <p>{message}</p>
-      <button className='addColumn' disabled={columns.length >= 6}
+      {columns.length >= 5 ? <p>Limite máximo de 5 colunas atingido!</p> : <button className='addColumn' disabled={columns.length >= 5}
         onClick={() => {
           createNewColumn();
         }}>
         <PlusIcon />Add Column
-      </button>
+      </button>}
       <div className='columns'>
         {columns.map(column =>
           <ColumnContainer key={column.id} column={column} deleteColumn={deleteColumn} />

@@ -1,7 +1,7 @@
 import {redirect } from 'react-router-dom';
 
 import AuthForm from './AuthForm';
-import Header from './Header';
+import Header from '../Header';
 
 function AuthenticationPage() {
   return (
