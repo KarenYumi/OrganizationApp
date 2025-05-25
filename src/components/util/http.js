@@ -3,7 +3,7 @@ import { QueryClient } from '@tanstack/react-query';
 export const queryClient = new QueryClient();
 
 export async function fetchEvents({ signal, searchTerm, max }) {
-  let url = 'http://organizationapp-backend.onrender.com/events';
+  let url = 'https://organizationapp-backend.onrender.com/events';
 
   if(searchTerm && max){
     url += "?search=" + searchTerm + "&max=" + max;
@@ -36,7 +36,7 @@ export async function createNewEvent({ event }) {
   console.log("Enviando evento para o backend:", event); 
 
   try {
-    const response = await fetch("http://organizationapp-backend.onrender.com/events", {
+    const response = await fetch("https://organizationapp-backend.onrender.com/events", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ event }),
@@ -56,7 +56,7 @@ export async function createNewEvent({ event }) {
 
 
 export async function fetchEvent({ id, signal }) {
-  const response = await fetch(`http://organizationapp-backend.onrender.com/events/${id}`, { signal });
+  const response = await fetch(`https://organizationapp-backend.onrender.com/events/${id}`, { signal });
 
   if (!response.ok) {
     const error = new Error('An error occurred while fetching the event');
@@ -72,7 +72,7 @@ export async function fetchEvent({ id, signal }) {
 
 
 export async function deleteEvent({ id }) {
-  const response = await fetch(`http://organizationapp-backend.onrender.com/events/${id}`, {
+  const response = await fetch(`https://organizationapp-backend.onrender.com/events/${id}`, {
     method: 'DELETE',
   });
 
@@ -87,7 +87,7 @@ export async function deleteEvent({ id }) {
 }
 
 export async function updateEvent({ id, event }) {
-  const response = await fetch(`http://organizationapp-backend.onrender.com/events/${id}`, {
+  const response = await fetch(`https://organizationapp-backend.onrender.com/events/${id}`, {
     method: 'PUT',
     body: JSON.stringify( event ), //perguntar se pd haver algum erro nesta parte, estava assim {event}, ai tirei pq ele tava duplicando event ai n batia com o back
     headers: {

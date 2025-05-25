@@ -28,7 +28,7 @@ export async function action({request}) {
     password: data.get('password'),
   }
 
-  const response = await fetch('http://organizationapp-backend.onrender.com/' + mode, {
+  const response = await fetch('https://organizationapp-backend.onrender.com/' + mode, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
