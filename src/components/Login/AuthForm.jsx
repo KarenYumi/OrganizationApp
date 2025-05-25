@@ -5,7 +5,7 @@ import classes from './AuthForm.module.css';
 
 // Função que faz a requisição de auth
 async function authenticateUser({ email, password, mode }) {
-  const response = await fetch(`http://http://organizationapp-backend.onrender.com/${mode}`, {
+  const response = await fetch(`http://organizationapp-backend.onrender.com/${mode}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
