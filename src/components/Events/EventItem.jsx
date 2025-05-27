@@ -8,16 +8,18 @@ export default function EventItem({ event }) {
   });
 
   const statusClass = `event-item-status ${
-    event.status === "Pendente"
-      ? "pending"
-      : event.status === "Pronto"
-      ? "ready"
-      : event.status === "Entregue"
-      ? "delivered"
-      : event.status === "Cancelado"
-      ? "cancelled"
-      : ""
-  }`;
+    event.status === "A Fazer"
+      ? "to do"
+      : event.status === "Pendente"
+        ? "pending"
+        : event.status === "Pronto"
+          ? "ready"
+          : event.status === "Entregue"
+            ? "delivered"
+            : event.status === "Cancelado"
+              ? "cancelled"
+              : ""
+    }`;
 
   return (
     <article className="event-item">

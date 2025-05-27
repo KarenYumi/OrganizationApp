@@ -75,16 +75,17 @@ export default function EventDetails() {
     })
     : "";
 
-  const statusClass = `event-item-status ${
-    data?.status === "Pendente"
-      ? "pending"
-      : data?.status === "Pronto"
-        ? "ready"
-        : data?.status === "Entregue"
-          ? "delivered"
-          : data?.status === "Cancelado"
-            ? "cancelled"
-            : ""
+  const statusClass = `event-item-status ${data?.status === "A Fazer"
+      ? "todo" 
+      : data?.status === "Pendente"
+        ? "pending"
+        : data?.status === "Pronto"
+          ? "ready"
+          : data?.status === "Entregue"
+            ? "delivered"
+            : data?.status === "Cancelado"
+              ? "cancelled"
+              : ""
     }`;
 
   if (data) {
