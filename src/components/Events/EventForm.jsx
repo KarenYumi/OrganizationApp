@@ -1,11 +1,6 @@
 import { useState, useEffect } from 'react';
 
 export default function EventForm({ inputData, onSubmit, children }) {
-  const [status, setStatus] = useState(inputData?.status ?? '');
-
-  useEffect(() => {
-    setStatus(inputData?.status ?? '');
-  }, [inputData]);
 
   function handleSubmit(event) {
     event.preventDefault();
@@ -13,7 +8,6 @@ export default function EventForm({ inputData, onSubmit, children }) {
     const formData = new FormData(event.target);
     const data = Object.fromEntries(formData);
 
-    data.status = status;
 
     onSubmit({ event: data });
   }
@@ -75,7 +69,7 @@ export default function EventForm({ inputData, onSubmit, children }) {
       <select
         name="status"
         id="status"
-        value={status} 
+        defaultValue={inputData?.status ?? 'A fazer'}
         onChange={(e) => setStatus(e.target.value)}
       >
         <option value="A fazer">A fazer</option>

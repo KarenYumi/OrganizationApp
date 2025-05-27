@@ -8,7 +8,7 @@ export default function EventItem({ event }) {
   });
 
   const statusClass = `event-item-status ${
-    event.status === "A Fazer"
+    event.status === "A fazer"
       ? "todo"
       : event.status === "Pendente"
         ? "pending"

@@ -75,7 +75,7 @@ export default function EventDetails() {
     })
     : "";
 
-  const statusClass = `event-item-status ${data?.status === "A Fazer"
+  const statusClass = `event-item-status ${data?.status === "A fazer"
       ? "todo" 
       : data?.status === "Pendente"
         ? "pending"
