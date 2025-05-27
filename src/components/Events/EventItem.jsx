@@ -9,7 +9,7 @@ export default function EventItem({ event }) {
 
   const statusClass = `event-item-status ${
     event.status === "A Fazer"
-      ? "to do"
+      ? "todo"
       : event.status === "Pendente"
         ? "pending"
         : event.status === "Pronto"
