@@ -16,7 +16,7 @@ export default function EditEvent() {
     queryFn: ({ signal }) => fetchEvent({ signal, id: params.id }),
   });
 
-  const { mutate } = useMutation({
+  const { mutate, isPending } = useMutation({
     mutationFn: updateEvent,
     onMutate: async (data) => {
       const newEvent = data.event;
@@ -37,12 +37,17 @@ export default function EditEvent() {
   });
 
   function handleSubmit(formData) {
-    mutate({
-      id: params.id,
-      event: formData
-    });
-    console.log("handle submit:", formData);
-    navigate("../");
+    mutate(
+      {
+        id: params.id,
+        event: formData
+      },
+      {
+        onSuccess: () => {
+          navigate("../")
+        },
+      }
+    );
   }
 
   function handleClose() {
@@ -66,15 +71,21 @@ export default function EditEvent() {
       </>
     )
   }
-  if (data) {
+  else if (data || isPending) {
     content = (
       <EventForm inputData={data} onSubmit={handleSubmit}>
-        <Link to="../" className="button-text">
-          Cancel
-        </Link>
-        <button type="submit" className="button">
-          Update
-        </button>
+        {isPending && "Submitting.."}
+        {!isPending && (
+          <>
+            <Link to="../" className="button-text">
+              Cancel
+            </Link>
+            <button type="submit" className="button">
+              Update
+            </button>
+          </>
+        )}
+
       </EventForm>
     );
   }
@@ -86,9 +97,9 @@ export default function EditEvent() {
   );
 }
 
-export function loader({params}){
+export function loader({ params }) {
   return queryClient.fetchQuery({
-  queryKey: ["events", params.id],
-  queryFn: ({signal}) => fetchEvent({signal, id: params.id}),
+    queryKey: ["events", params.id],
+    queryFn: ({ signal }) => fetchEvent({ signal, id: params.id }),
   })
 }
