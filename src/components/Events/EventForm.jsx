@@ -1,47 +1,106 @@
 import { useState, useEffect } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
 import { MultiSelectCombobox } from '../MultiSelectComboBox/MultiSelectCombobox.jsx';
-import { fetchProducts, createNewProduct } from '../util/http.js';
-import { queryClient } from '../util/http.js';
+
+// Lista temporária caso o backend não funcione
+const PRODUTOS_FALLBACK = [
+  'Bolo de Chocolate',
+  'Bolo de Cenoura', 
+  'Bolo de Coco',
+  'Bolo de Morango',
+  'Bolo Red Velvet'
+];
 
 export default function EventForm({ inputData, onSubmit, children }) {
   const [status, setStatus] = useState(inputData?.status ?? '');
   const [selectedProducts, setSelectedProducts] = useState([]);
+  const [availableProducts, setAvailableProducts] = useState(PRODUTOS_FALLBACK);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Busca produtos do backend
-  const { data: productsData, isLoading: productsLoading } = useQuery({
-    queryKey: ['products'],
-    queryFn: ({ signal }) => fetchProducts({ signal }),
-    staleTime: 5 * 60 * 1000, // 5 minutos
-  });
-
-  // Mutation para criar novo produto
-  const { mutate: createProduct } = useMutation({
-    mutationFn: createNewProduct,
-    onSuccess: () => {
-      // Atualiza a lista de produtos
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-    },
-    onError: (error) => {
-      console.error('Erro ao criar produto:', error);
-      // Aqui você pode mostrar uma notificação de erro
+  // Função para buscar produtos do backend
+  const fetchProducts = async () => {
+    try {
+      console.log('Tentando buscar produtos...');
+      const response = await fetch('https://organizationapp-backend.onrender.com/products');
+      
+      if (!response.ok) {
+        throw new Error(`Erro ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('Produtos recebidos:', data);
+      
+      if (data.products && Array.isArray(data.products)) {
+        const productNames = data.products.map(p => p.name);
+        setAvailableProducts(productNames);
+        console.log('Produtos processados:', productNames);
+      } else {
+        console.warn('Formato de dados inesperado:', data);
+        // Mantém produtos fallback
+      }
+    } catch (error) {
+      console.error('Erro ao buscar produtos:', error);
+      setError(error.message);
+      // Mantém produtos fallback em caso de erro
+    } finally {
+      setIsLoadingProducts(false);
     }
-  });
+  };
+
+  // Função para criar novo produto
+  const createNewProduct = async (productName) => {
+    try {
+      console.log('Criando produto:', productName);
+      const response = await fetch('https://organizationapp-backend.onrender.com/products', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: productName,
+          category: 'personalizado'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erro ao criar produto: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Produto criado:', data);
+
+      // Adiciona à lista local
+      setAvailableProducts(prev => [...prev, productName]);
+      
+      // Adiciona aos selecionados
+      setSelectedProducts(prev => [...prev, productName]);
+      
+    } catch (error) {
+      console.error('Erro ao criar produto:', error);
+      // Adiciona apenas localmente se der erro
+      setAvailableProducts(prev => [...prev, productName]);
+      setSelectedProducts(prev => [...prev, productName]);
+    }
+  };
 
   useEffect(() => {
     setStatus(inputData?.status ?? '');
     
+    // Busca produtos do backend
+    fetchProducts();
+    
     // Se está editando um pedido existente
     if (inputData) {
-      // Pega produtos do campo products ou da description (compatibilidade)
       if (inputData.products) {
         const products = inputData.products.split('\n').filter(p => p.trim());
         setSelectedProducts(products);
+        console.log('Produtos carregados para edição:', products);
       } else if (inputData.description) {
-        // Para compatibilidade com dados antigos
+        // Compatibilidade com formato antigo
         const lines = inputData.description.split('\n').filter(p => p.trim());
         if (lines.length <= 5 && lines.every(line => line.length < 50)) {
           setSelectedProducts(lines);
+          console.log('Produtos do formato antigo:', lines);
         }
       }
     }
@@ -57,27 +116,19 @@ export default function EventForm({ inputData, onSubmit, children }) {
     data.products = selectedProducts.join('\n');
     data.status = status;
 
+    console.log('Dados do formulário:', data);
     onSubmit({ event: data });
   }
 
-  // Função para lidar com mudanças nos produtos selecionados
   const handleProductsChange = (products) => {
+    console.log('Produtos selecionados mudaram:', products);
     setSelectedProducts(products);
   };
 
-  // Função para criar um novo produto
   const handleCreateNewProduct = (newProductName) => {
-    createProduct({ 
-      name: newProductName,
-      category: 'personalizado' 
-    });
-    
-    // Adiciona temporariamente aos selecionados (será confirmado quando a mutation retornar)
-    setSelectedProducts(prev => [...prev, newProductName]);
+    console.log('Solicitação para criar produto:', newProductName);
+    createNewProduct(newProductName);
   };
-
-  // Prepara lista de produtos para o combobox
-  const availableProducts = productsData ? productsData.map(p => p.name) : [];
 
   return (
     <form id="event-form" onSubmit={handleSubmit}>
@@ -95,20 +146,37 @@ export default function EventForm({ inputData, onSubmit, children }) {
       {/* Campo de seleção de produtos */}
       <p className="control">
         <label htmlFor="products">Produtos</label>
-        {productsLoading ? (
-          <p>Carregando produtos...</p>
-        ) : (
-          <MultiSelectCombobox
-            options={availableProducts}
-            selectedItems={selectedProducts}
-            onChange={handleProductsChange}
-            onCreateNew={handleCreateNewProduct}
-            placeholder="Digite ou selecione os bolos..."
-            createText="Criar novo bolo"
-            noResultsText="Nenhum bolo encontrado"
-            allowCreate={true}
-          />
+        
+        {/* Debug info */}
+        {error && (
+          <div style={{ color: 'red', fontSize: '0.8rem', marginBottom: '0.5rem' }}>
+            Erro: {error} (usando lista padrão)
+          </div>
         )}
+        
+        {isLoadingProducts ? (
+          <p style={{ color: '#666' }}>Carregando produtos...</p>
+        ) : (
+          <>
+            <MultiSelectCombobox
+              options={availableProducts}
+              selectedItems={selectedProducts}
+              onChange={handleProductsChange}
+              onCreateNew={handleCreateNewProduct}
+              placeholder="Digite ou selecione os bolos..."
+              createText="Criar novo bolo"
+              noResultsText="Nenhum bolo encontrado"
+              allowCreate={true}
+            />
+            
+            {/* Debug: mostra produtos disponíveis */}
+            <small style={{ color: '#999', fontSize: '0.75rem' }}>
+              Produtos disponíveis: {availableProducts.length} | 
+              Selecionados: {selectedProducts.length}
+            </small>
+          </>
+        )}
+        
         {selectedProducts.length === 0 && (
           <small style={{ color: '#666', fontSize: '0.875rem' }}>
             Selecione pelo menos um produto

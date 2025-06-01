@@ -13,10 +13,6 @@ export async function fetchEvents({ signal, searchTerm, max }) {
     url += "?max=" + max;
   }
 
-  if (searchTerm) {
-    url += '?search=' + searchTerm;
-  }
-
   const response = await fetch(url, { signal: signal });
 
   if (!response.ok) {
@@ -105,7 +101,7 @@ export async function updateEvent({ id, event }) {
   return response.json();
 }
 
-// NOVAS FUNÇÕES DE PRODUTOS
+// FUNÇÕES DE PRODUTOS CORRIGIDAS
 export async function fetchProducts({ signal }) {
   const response = await fetch("https://organizationapp-backend.onrender.com/products", { signal });
 
@@ -121,7 +117,8 @@ export async function fetchProducts({ signal }) {
 }
 
 export async function createNewProduct(productData) {
-  const response = await fetch("hhttps://organizationapp-backend.onrender.com/products", {
+  // CORRIGIDO: Removido o 'h' extra
+  const response = await fetch("https://organizationapp-backend.onrender.com/products", {
     method: "POST",
     body: JSON.stringify(productData),
     headers: {
