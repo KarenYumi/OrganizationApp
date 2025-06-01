@@ -9,16 +9,18 @@ export default function EventItem({ event }) {
   });
 
   const statusClass = `event-item-status ${
-    event.status === "Pendente"
-      ? "pending"
-      : event.status === "Pronto"
-      ? "ready"
-      : event.status === "Entregue"
-      ? "delivered"
-      : event.status === "Cancelado"
-      ? "cancelled"
-      : ""
-  }`;
+    event.status === "A fazer"
+      ? "todo"
+      : event.status === "Pendente"
+        ? "pending"
+        : event.status === "Pronto"
+          ? "ready"
+          : event.status === "Entregue"
+            ? "delivered"
+            : event.status === "Cancelado"
+              ? "cancelled"
+              : ""
+    }`;
 
   // Extrai produtos e descrição
   const products = event.products ? event.products.split('\n').filter(p => p.trim()) : [];

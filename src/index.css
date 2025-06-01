@@ -150,6 +150,9 @@ ul {
   font-family: 'Quicksand', sans-serif;
   float:left;
 }
+.event-item-status.todo {
+  color: #000000;
+}
 
 .event-item-status.pending {
   color: #2297e6;

@@ -17,7 +17,8 @@ export default function EventDetails() {
 
   const { data, isPending, isError, error } = useQuery({
     queryKey: ["events", param.id],
-    queryFn: ({ signal }) => fetchEvent({ signal, id: param.id })
+    queryFn: ({ signal }) => fetchEvent({ signal, id: param.id }),
+    placeholderData: () => queryClient.getQueryData(["events", param.id])
   });
 
   const {
@@ -76,16 +77,17 @@ export default function EventDetails() {
     })
     : "";
 
-  const statusClass = `event-item-status ${
-    data?.status === "Pendente"
-      ? "pending"
-      : data?.status === "Pronto"
-        ? "ready"
-        : data?.status === "Entregue"
-          ? "delivered"
-          : data?.status === "Cancelado"
-            ? "cancelled"
-            : ""
+  const statusClass = `event-item-status ${data?.status === "A fazer"
+      ? "todo" 
+      : data?.status === "Pendente"
+        ? "pending"
+        : data?.status === "Pronto"
+          ? "ready"
+          : data?.status === "Entregue"
+            ? "delivered"
+            : data?.status === "Cancelado"
+              ? "cancelled"
+              : ""
     }`;
 
   // Extrai produtos e descrição
