@@ -17,10 +17,21 @@ app.use(cors({
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
+app.use((req, res, next) => {
+  console.log(`📥 ${req.method} ${req.path} - ${new Date().toLocaleTimeString()}`);
+  next();
+});
+
 app.use(router);
+
+app.use('/products', (req, res, next) => {
+  console.log('🎯 Rota de produtos foi alcançada!');
+  next();
+});
 
 // ROTAS DE PRODUTOS
 app.get('/products', async (req, res) => {
+  console.log('✅ GET /products chamado');
   try {
     const productsFileContent = await fs.readFile('./data/products.json');
     const products = JSON.parse(productsFileContent);
@@ -28,16 +39,18 @@ app.get('/products', async (req, res) => {
     // Filtra apenas produtos ativos
     const activeProducts = products.filter(product => product.active);
     
+    console.log(`📦 Retornando ${activeProducts.length} produtos ativos`);
     res.json({
       products: activeProducts
     });
   } catch (error) {
-    console.error('Erro ao buscar produtos:', error);
+    console.error('❌ Erro ao buscar produtos:', error);
     res.status(500).json({ message: 'Erro ao buscar produtos' });
   }
 });
 
 app.post('/products', async (req, res) => {
+  console.log('✅ POST /products chamado');
   try {
     const { name, category = 'personalizado' } = req.body;
 
@@ -69,12 +82,13 @@ app.post('/products', async (req, res) => {
 
     await fs.writeFile('./data/products.json', JSON.stringify(products, null, 2));
 
+    console.log(`✅ Produto criado: ${newProduct.name}`);
     res.status(201).json({ 
       message: 'Produto criado com sucesso',
       product: newProduct 
     });
   } catch (error) {
-    console.error('Erro ao criar produto:', error);
+    console.error('❌ Erro ao criar produto:', error);
     res.status(500).json({ message: 'Erro ao criar produto' });
   }
 });
