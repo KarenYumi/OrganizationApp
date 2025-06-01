@@ -132,7 +132,7 @@ export default function EventForm({ inputData, onSubmit, children }) {
 
   return (
     <form id="event-form" onSubmit={handleSubmit}>
-      <p className="control">
+      <div className="control">
         <label htmlFor="title">Titulo</label>
         <input
           type="text"
@@ -141,21 +141,31 @@ export default function EventForm({ inputData, onSubmit, children }) {
           defaultValue={inputData?.title ?? ''}
           required
         />
-      </p>
+      </div>
 
       {/* Campo de seleção de produtos */}
-      <p className="control">
+      <div className="control">
         <label htmlFor="products">Produtos</label>
         
-        {/* Debug info */}
+        {/* Debug info - CORRIGIDO: removido p dentro de p */}
         {error && (
-          <div style={{ color: 'red', fontSize: '0.8rem', marginBottom: '0.5rem' }}>
+          <div style={{ 
+            color: 'red', 
+            fontSize: '0.8rem', 
+            marginBottom: '0.5rem',
+            padding: '0.5rem',
+            backgroundColor: '#ffe6e6',
+            borderRadius: '4px',
+            border: '1px solid #ffcccc'
+          }}>
             Erro: {error} (usando lista padrão)
           </div>
         )}
         
         {isLoadingProducts ? (
-          <p style={{ color: '#666' }}>Carregando produtos...</p>
+          <div style={{ color: '#666', padding: '0.5rem' }}>
+            Carregando produtos...
+          </div>
         ) : (
           <>
             <MultiSelectCombobox
@@ -169,23 +179,32 @@ export default function EventForm({ inputData, onSubmit, children }) {
               allowCreate={true}
             />
             
-            {/* Debug: mostra produtos disponíveis */}
-            <small style={{ color: '#999', fontSize: '0.75rem' }}>
+            {/* Debug: mostra produtos disponíveis - CORRIGIDO */}
+            <div style={{ 
+              color: '#999', 
+              fontSize: '0.75rem',
+              marginTop: '0.25rem'
+            }}>
               Produtos disponíveis: {availableProducts.length} | 
               Selecionados: {selectedProducts.length}
-            </small>
+            </div>
           </>
         )}
         
         {selectedProducts.length === 0 && (
-          <small style={{ color: '#666', fontSize: '0.875rem' }}>
+          <div style={{ 
+            color: '#666', 
+            fontSize: '0.875rem',
+            marginTop: '0.25rem',
+            fontStyle: 'italic'
+          }}>
             Selecione pelo menos um produto
-          </small>
+          </div>
         )}
-      </p>
+      </div>
 
       {/* Campo de descrição/observações */}
-      <p className="control">
+      <div className="control">
         <label htmlFor="description">Observações Adicionais</label>
         <textarea
           id="description"
@@ -194,10 +213,10 @@ export default function EventForm({ inputData, onSubmit, children }) {
           rows={3}
           defaultValue={inputData?.description ?? ''}
         />
-      </p>
+      </div>
 
       <div className="controls-row">
-        <p className="control">
+        <div className="control">
           <label htmlFor="date">Data</label>
           <input
             type="date"
@@ -206,9 +225,9 @@ export default function EventForm({ inputData, onSubmit, children }) {
             defaultValue={inputData?.date ?? ''}
             required
           />
-        </p>
+        </div>
 
-        <p className="control">
+        <div className="control">
           <label htmlFor="time">Horas</label>
           <input
             type="time"
@@ -217,10 +236,10 @@ export default function EventForm({ inputData, onSubmit, children }) {
             defaultValue={inputData?.time ?? ''}
             required
           />
-        </p>
+        </div>
       </div>
 
-      <p className="control">
+      <div className="control">
         <label htmlFor="address">Endereço</label>
         <input
           type="text"
@@ -229,9 +248,9 @@ export default function EventForm({ inputData, onSubmit, children }) {
           defaultValue={inputData?.address ?? ''}
           required
         />
-      </p>
+      </div>
 
-      <p className="control">
+      <div className="control">
         <label htmlFor="status">Status</label>
         <select
           name="status"
@@ -246,9 +265,9 @@ export default function EventForm({ inputData, onSubmit, children }) {
           <option value="Entregue">Entregue</option>
           <option value="Cancelado">Cancelado</option>
         </select>
-      </p>
+      </div>
 
-      <p className="form-actions">{children}</p>
+      <div className="form-actions">{children}</div>
     </form>
   );
 }
