@@ -7,6 +7,7 @@ import { deleteEvent, fetchEvent, queryClient } from '../util/http.js';
 import ErrorBlock from '../UI/ErrorBlock.jsx';
 import Modal from '../UI/Modal.jsx';
 import Kanban from '../Kanban/Kanban.jsx';
+import ProductsList from '../Products/ProductsList.jsx';
 
 export default function EventDetails() {
   const [isDeleting, setIsDeleting] = useState(false);
@@ -87,6 +88,10 @@ export default function EventDetails() {
             : ""
     }`;
 
+  // Extrai produtos e descrição
+  const products = data?.products ? data.products.split('\n').filter(p => p.trim()) : [];
+  const description = data?.description || '';
+
   if (data) {
     content = (
       <>
@@ -103,13 +108,52 @@ export default function EventDetails() {
               <p id="event-details-location">{data.address}</p>
               <time>{formattedDate} - {data.time}</time>
             </div>
-            <p id="event-details-description">{data.description}</p>
+
+            {/* Seção de produtos */}
+            <div id="event-details-products" style={{ margin: '1.5rem 0' }}>
+              <h3 style={{ 
+                fontSize: '1.3rem', 
+                color: '#2f82ff', 
+                marginBottom: '0.5rem' 
+              }}>
+                Produtos:
+              </h3>
+              {products.length > 0 ? (
+                <ProductsList products={products} />
+              ) : (
+                <p style={{ color: '#666', fontStyle: 'italic' }}>
+                  Nenhum produto especificado
+                </p>
+              )}
+            </div>
+
+            {/* Seção de observações/descrição */}
+            {description && (
+              <div id="event-details-description" style={{ margin: '1.5rem 0' }}>
+                <h3 style={{ 
+                  fontSize: '1.3rem', 
+                  color: '#2f82ff', 
+                  marginBottom: '0.5rem' 
+                }}>
+                  Observações:
+                </h3>
+                <div style={{
+                  backgroundColor: '#f8f9fa',
+                  padding: '1rem',
+                  borderRadius: '8px',
+                  borderLeft: '4px solid #28a745',
+                  whiteSpace: 'pre-line'
+                }}>
+                  {description}
+                </div>
+              </div>
+            )}
+            
             <p className={statusClass}>{data.status}</p>
           </div>
         </div>
         <Kanban />
       </>
-
     );
   }
 

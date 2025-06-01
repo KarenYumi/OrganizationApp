@@ -1,0 +1,62 @@
+[
+  {
+    "id": "1",
+    "name": "Bolo de Chocolate",
+    "category": "tradicional",
+    "active": true
+  },
+  {
+    "id": "2", 
+    "name": "Bolo de Cenoura",
+    "category": "tradicional",
+    "active": true
+  },
+  {
+    "id": "3",
+    "name": "Bolo de Coco",
+    "category": "tradicional", 
+    "active": true
+  },
+  {
+    "id": "4",
+    "name": "Bolo de Morango",
+    "category": "frutas",
+    "active": true
+  },
+  {
+    "id": "5",
+    "name": "Bolo Red Velvet",
+    "category": "especial",
+    "active": true
+  },
+  {
+    "id": "6",
+    "name": "Bolo de Laranja", 
+    "category": "frutas",
+    "active": true
+  },
+  {
+    "id": "7",
+    "name": "Bolo de Limão",
+    "category": "frutas",
+    "active": true
+  },
+  {
+    "id": "8",
+    "name": "Bolo de Soja",
+    "category": "especial",
+    "active": true
+  },
+  {
+    "id": "9",
+    "name": "Bolo de Queijo com Goiabada",
+    "category": "especial",
+    "active": true
+  },
+  {
+    "id": "10",
+    "name": "Bolo de Sorbet",
+    "category": "especial",
+    "active": true
+  }
+]

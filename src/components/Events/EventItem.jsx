@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import ProductsList from '../Products/ProductsList.jsx';
 
 export default function EventItem({ event }) {
   const formattedDate = new Date(event.date).toLocaleDateString('pt-BR', {
@@ -19,13 +20,42 @@ export default function EventItem({ event }) {
       : ""
   }`;
 
+  // Extrai produtos e descrição
+  const products = event.products ? event.products.split('\n').filter(p => p.trim()) : [];
+  const description = event.description || '';
+
+  // Para preview resumido
+  const productsPreview = products.length > 0 ? products.join(', ') : '';
+  const shortPreview = productsPreview.length > 40 
+    ? productsPreview.substring(0, 40) + '...' 
+    : productsPreview;
+
   return (
     <article className="event-item">
       <div className="event-item-content">
         <div>
           <h2>{event.title}</h2>
           <p className="event-item-date">{formattedDate}</p>
-          <p className="event-item-description">{event.description}</p>
+          
+          {/* Produtos */}
+          {products.length > 0 && (
+            <div className="event-item-products">
+              {products.length <= 2 ? (
+                <ProductsList products={products} />
+              ) : (
+                <p className="event-item-description">
+                  <strong>Produtos:</strong> {shortPreview}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Observações/Descrição */}
+          {description && (
+            <div className="event-item-description" style={{ marginTop: '0.5rem' }}>
+              <strong>Obs:</strong> {description.length > 60 ? description.substring(0, 60) + '...' : description}
+            </div>
+          )}
         </div>
         <div>
           <p className={statusClass}>{event.status}</p>

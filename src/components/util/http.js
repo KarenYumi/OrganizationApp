@@ -104,3 +104,38 @@ export async function updateEvent({ id, event }) {
 
   return response.json();
 }
+
+// NOVAS FUNÇÕES DE PRODUTOS
+export async function fetchProducts({ signal }) {
+  const response = await fetch("https://organizationapp-backend.onrender.com/products", { signal });
+
+  if (!response.ok) {
+    const error = new Error("Erro ao buscar produtos");
+    error.code = response.status;
+    error.info = await response.json();
+    throw error;
+  }
+
+  const { products } = await response.json();
+  return products;
+}
+
+export async function createNewProduct(productData) {
+  const response = await fetch("hhttps://organizationapp-backend.onrender.com/products", {
+    method: "POST",
+    body: JSON.stringify(productData),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const error = new Error("Erro ao criar produto");
+    error.code = response.status;
+    error.info = await response.json();
+    throw error;
+  }
+
+  const { product } = await response.json();
+  return product;
+}

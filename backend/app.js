@@ -19,22 +19,67 @@ app.use(express.static('public'));
 
 app.use(router);
 
-// app.use((req, res, next) => {
-//   res.setHeader('Access-Control-Allow-Origin', '*');
-//   res.setHeader(
-//     'Access-Control-Allow-Methods',
-//     'GET, POST, PUT, DELETE, OPTIONS'
-//   );
-//   res.setHeader(
-//     'Access-Control-Allow-Headers',
-//     'X-Requested-With,content-type'
-//   );
-//   if (req.method === 'OPTIONS') {
-//     return res.status(200).end();
-//   }
-//   next();
-// });
+// ROTAS DE PRODUTOS
+app.get('/products', async (req, res) => {
+  try {
+    const productsFileContent = await fs.readFile('./data/products.json');
+    const products = JSON.parse(productsFileContent);
+    
+    // Filtra apenas produtos ativos
+    const activeProducts = products.filter(product => product.active);
+    
+    res.json({
+      products: activeProducts
+    });
+  } catch (error) {
+    console.error('Erro ao buscar produtos:', error);
+    res.status(500).json({ message: 'Erro ao buscar produtos' });
+  }
+});
 
+app.post('/products', async (req, res) => {
+  try {
+    const { name, category = 'personalizado' } = req.body;
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({ message: 'Nome do produto é obrigatório' });
+    }
+
+    const productsFileContent = await fs.readFile('./data/products.json');
+    const products = JSON.parse(productsFileContent);
+
+    // Verifica se o produto já existe
+    const existingProduct = products.find(p => 
+      p.name.toLowerCase() === name.trim().toLowerCase()
+    );
+
+    if (existingProduct) {
+      return res.status(409).json({ message: 'Produto já existe' });
+    }
+
+    // Cria novo produto
+    const newProduct = {
+      id: (Math.max(...products.map(p => parseInt(p.id))) + 1).toString(),
+      name: name.trim(),
+      category: category,
+      active: true
+    };
+
+    products.push(newProduct);
+
+    await fs.writeFile('./data/products.json', JSON.stringify(products, null, 2));
+
+    res.status(201).json({ 
+      message: 'Produto criado com sucesso',
+      product: newProduct 
+    });
+  } catch (error) {
+    console.error('Erro ao criar produto:', error);
+    res.status(500).json({ message: 'Erro ao criar produto' });
+  }
+});
+
+// ROTAS DE EVENTOS (mantém as existentes)
 app.get('/events', async (req, res) => {
   const { search, max } = req.query;
   const eventsFileContent = await fs.readFile('./data/events.json');
@@ -56,6 +101,7 @@ app.get('/events', async (req, res) => {
       id: event.id,
       title: event.title,
       description: event.description,
+      products: event.products || '', // Novo campo
       date: event.date,
       time: event.time,
       address: event.address,
@@ -63,7 +109,6 @@ app.get('/events', async (req, res) => {
     })),
   });
 });
-
 
 app.get('/events/:id', async (req, res) => {
   const { id } = req.params;
@@ -93,13 +138,12 @@ app.post('/events', async (req, res) => {
 
   if (
     !event.title?.trim() ||
-    !event.description?.trim() ||
     !event.date?.trim() ||
     !event.time?.trim() ||
     !event.address?.trim() ||
     !event.status?.trim()
   ) {
-    console.log('Invalid event dataaaa:', event);
+    console.log('Invalid event data:', event);
     return res.status(400).json({ message: 'Invalid data provided.' });
   }
 
@@ -130,7 +174,6 @@ app.put('/events/:id', async (req, res) => {
 
   if (
     !event.title?.trim() ||
-    !event.description?.trim() ||
     !event.date?.trim() ||
     !event.time?.trim() ||
     !event.address?.trim() ||
@@ -185,4 +228,3 @@ app.delete('/events/:id', async (req, res) => {
 app.listen(3000, () => {
   console.log('Server running on port 3000');
 });
-
