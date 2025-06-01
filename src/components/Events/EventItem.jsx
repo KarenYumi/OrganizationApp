@@ -42,7 +42,7 @@ export default function EventItem({ event }) {
           {/* Produtos */}
           {products.length > 0 && (
             <div className="event-item-products">
-              {products.length <= 2 ? (
+              {products.length <= 0 ? (
                 <ProductsList products={products} />
               ) : (
                 <p className="event-item-description">
@@ -54,7 +54,7 @@ export default function EventItem({ event }) {
 
           {/* Observações/Descrição */}
           {description && (
-            <div className="event-item-description" style={{ marginTop: '0.5rem' }}>
+            <div className="event-item-description" style={{ marginTop: '0.5rem', paddingBottom: "0.5rem" }}>
               <strong>Obs:</strong> {description.length > 60 ? description.substring(0, 60) + '...' : description}
             </div>
           )}

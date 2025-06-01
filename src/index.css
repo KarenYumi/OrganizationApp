@@ -122,6 +122,7 @@ ul {
   font-size: 1.6rem;
   font-family: 'Lato', sans-serif;
   margin: 0;
+  padding: 0;
   color: #2f82ff;
 }
 
@@ -138,7 +139,7 @@ ul {
 }
 
 .event-item .event-item-description {
-  margin-top: 2.5rem;
+  margin-top: 1rem;
   font-size: 1.1rem;
   font-family: 'Quicksand', sans-serif;
 }
@@ -612,7 +613,7 @@ section.kanban > * {
 
 /* Estilização para a seção de produtos nos cards */
 .event-item-products {
-  margin-top: 1rem;
+  margin-top: 0.5rem;
 }
 
 .event-item-products ul {
