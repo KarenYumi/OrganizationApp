@@ -4,9 +4,9 @@ import express from 'express';
 import cors from 'cors';
 import router from './routes/auth.js'; 
 
-const app = express(); // AQUI ESTÁ A DEFINIÇÃO DO APP
+const app = express();
 
-// CORS configurado corretamente
+// CORS configurado corretamente - COMO ESTAVA
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -16,14 +16,7 @@ app.use(cors({
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
-// MIDDLEWARE DE DEBUG - Para ver todas as requisições
-app.use((req, res, next) => {
-  console.log(`📥 ${req.method} ${req.path} - ${new Date().toLocaleTimeString()}`);
-  console.log('Headers:', req.headers);
-  next();
-});
-
-// VERIFICAÇÃO DO ARQUIVO products.json na inicialização
+// VERIFICAÇÃO DO ARQUIVO products.json na inicialização - COMO ESTAVA
 async function initializeProductsFile() {
   try {
     await fs.access('./data/products.json');
@@ -77,7 +70,7 @@ async function initializeProductsFile() {
   }
 }
 
-// ROTAS DE PRODUTOS - DEFINIDAS ANTES das rotas de auth
+// ROTAS DE PRODUTOS - EXATAMENTE COMO ESTAVAM
 app.get('/products', async (req, res) => {
   console.log('🎯 Rota GET /products chamada');
   try {
@@ -148,7 +141,7 @@ app.post('/products', async (req, res) => {
   }
 });
 
-// ROTAS DE EVENTOS (MODIFICADAS para suportar bolosDetalhados)
+// ROTAS DE EVENTOS - EXATAMENTE COMO ESTAVAM + apenas bolosDetalhados
 app.get('/events', async (req, res) => {
   const { search, max } = req.query;
   const eventsFileContent = await fs.readFile('./data/events.json');
@@ -171,7 +164,7 @@ app.get('/events', async (req, res) => {
       title: event.title,
       description: event.description,
       products: event.products || '',
-      bolosDetalhados: event.bolosDetalhados || '', // NOVO CAMPO
+      bolosDetalhados: event.bolosDetalhados || '', // ÚNICA ADIÇÃO
       date: event.date,
       time: event.time,
       address: event.address,
@@ -220,16 +213,8 @@ app.post('/events', async (req, res) => {
 
   const newEvent = {
     id: Math.round(Math.random() * 10000).toString(),
-    ...event, // Isso já inclui bolosDetalhados se estiver presente
+    ...event,
   };
-
-  // Log para debug
-  console.log('📋 Evento sendo salvo:', {
-    id: newEvent.id,
-    title: newEvent.title,
-    products: newEvent.products ? 'SIM' : 'NÃO',
-    bolosDetalhados: newEvent.bolosDetalhados ? 'SIM' : 'NÃO'
-  });
 
   events.push(newEvent);
   await fs.writeFile('./data/events.json', JSON.stringify(events));
@@ -264,16 +249,7 @@ app.put('/events/:id', async (req, res) => {
     return res.status(404).json({ message: 'Event not found' });
   }
 
-  events[eventIndex] = { id, ...event }; // Isso já inclui bolosDetalhados se estiver presente
-
-  // Log para debug
-  console.log('📝 Evento sendo atualizado:', {
-    id: id,
-    title: events[eventIndex].title,
-    products: events[eventIndex].products ? 'SIM' : 'NÃO',
-    bolosDetalhados: events[eventIndex].bolosDetalhados ? 'SIM' : 'NÃO'
-  });
-
+  events[eventIndex] = { id, ...event };
   await fs.writeFile('./data/events.json', JSON.stringify(events));
 
   setTimeout(() => {
@@ -299,53 +275,10 @@ app.delete('/events/:id', async (req, res) => {
   }, 1000);
 });
 
-// NOVA ROTA para migrar dados antigos (OPCIONAL)
-app.post('/migrate-old-events', async (req, res) => {
-  try {
-    const eventsFileContent = await fs.readFile('./data/events.json');
-    const events = JSON.parse(eventsFileContent);
-    
-    let migrationCount = 0;
-    
-    const updatedEvents = events.map(event => {
-      // Se tem products mas não tem bolosDetalhados, converte
-      if (event.products && !event.bolosDetalhados) {
-        const products = event.products.split('\n').filter(p => p.trim());
-        const bolosDetalhados = products.map(produto => ({
-          nome: produto,
-          peso: '', // Será preenchido pelo usuário
-          descricao: ''
-        }));
-        
-        event.bolosDetalhados = JSON.stringify(bolosDetalhados);
-        migrationCount++;
-      }
-      
-      return event;
-    });
-    
-    if (migrationCount > 0) {
-      await fs.writeFile('./data/events.json', JSON.stringify(updatedEvents));
-      console.log(`✅ Migração concluída: ${migrationCount} eventos atualizados`);
-    }
-    
-    res.json({ 
-      message: `Migração concluída. ${migrationCount} eventos foram atualizados.`,
-      migratedEvents: migrationCount
-    });
-  } catch (error) {
-    console.error('❌ Erro na migração:', error);
-    res.status(500).json({ 
-      message: 'Erro na migração',
-      error: error.message 
-    });
-  }
-});
-
-// ROTAS DE AUTH - POR ÚLTIMO
+// ROTAS DE AUTH - EXATAMENTE COMO ESTAVAM
 app.use('/auth', router);
 
-// MIDDLEWARE para capturar rotas não encontradas
+// MIDDLEWARE para capturar rotas não encontradas - COMO ESTAVA
 app.use('*', (req, res) => {
   console.log(`❌ Rota não encontrada: ${req.method} ${req.originalUrl}`);
   res.status(404).json({ 
@@ -355,7 +288,7 @@ app.use('*', (req, res) => {
   });
 });
 
-// INICIALIZAÇÃO DO SERVIDOR
+// INICIALIZAÇÃO DO SERVIDOR - COMO ESTAVA
 async function startServer() {
   try {
     await initializeProductsFile();
@@ -370,7 +303,6 @@ async function startServer() {
       console.log('   GET  /events/:id');
       console.log('   PUT  /events/:id');
       console.log('   DELETE /events/:id');
-      console.log('   POST /migrate-old-events');
     });
   } catch (error) {
     console.error('❌ Erro ao inicializar servidor:', error);
