@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 
-const MultiSelectCombobox = ({
+const SingleSelectCombobox = ({
   options = [],
-  selectedItems = [],
+  selectedItem = '',
   onChange,
-  placeholder = 'Digite ou selecione produtos...',
+  placeholder = 'Digite ou selecione...',
   allowCreate = true,
-  createText = 'Criar novo produto',
-  noResultsText = 'Nenhum produto encontrado',
+  createText = 'Criar novo',
+  noResultsText = 'Nenhum item encontrado',
   className = '',
   onCreateNew,
   searchKey = null,
@@ -22,6 +22,13 @@ const MultiSelectCombobox = ({
   useEffect(() => {
     setFilteredOptions(options);
   }, [options]);
+
+  // Atualiza o input quando selectedItem muda
+  useEffect(() => {
+    if (selectedItem && !isOpen) {
+      setInputValue(getDisplayText(selectedItem));
+    }
+  }, [selectedItem, isOpen]);
 
   // Função para obter o texto que será exibido
   const getDisplayText = (item) => {
@@ -70,6 +77,7 @@ const MultiSelectCombobox = ({
       }
     } else if (e.key === 'Escape') {
       setIsOpen(false);
+      setInputValue(getDisplayText(selectedItem));
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
       setIsOpen(true);
@@ -79,66 +87,69 @@ const MultiSelectCombobox = ({
   // Função para selecionar uma opção
   const selectOption = (option) => {
     const displayText = getDisplayText(option);
-    
-    // Verifica se o item já está selecionado
-    const isAlreadySelected = selectedItems.some(item => 
-      getDisplayText(item) === displayText
-    );
-
-    if (!isAlreadySelected) {
-      const newSelectedItems = [...selectedItems, option];
-      onChange(newSelectedItems);
-    }
-
-    // Limpa o input e fecha o dropdown
-    setInputValue('');
+    setInputValue(displayText);
+    onChange(option); // Passa o item selecionado
     setIsOpen(false);
     setFilteredOptions(options);
   };
 
-  // Função para criar um novo produto
+  // Função para criar um novo item
   const createNewOption = () => {
     setIsOpen(false);
     
-    const newProduct = inputValue.trim();
-    if (newProduct) {
+    const newItem = inputValue.trim();
+    if (newItem) {
       if (onCreateNew && typeof onCreateNew === 'function') {
-        onCreateNew(newProduct);
+        onCreateNew(newItem);
+        // Seleciona automaticamente o item criado
+        onChange(newItem);
       } else {
-        selectOption(newProduct);
+        onChange(newItem);
       }
+      setInputValue(newItem);
     }
-    
-    setInputValue('');
   };
 
-  // Função para remover um item selecionado
-  const removeSelectedItem = (itemToRemove) => {
-    const newSelectedItems = selectedItems.filter(item => 
-      getDisplayText(item) !== getDisplayText(itemToRemove)
-    );
-    onChange(newSelectedItems);
+  // Função para limpar seleção
+  const clearSelection = () => {
+    setInputValue('');
+    onChange('');
   };
 
   // Verifica se é uma nova opção
   const isNewOption = inputValue.trim() && allowCreate &&
     !options.some(item => getDisplayText(item) === inputValue.trim()) &&
-    !selectedItems.some(item => getDisplayText(item) === inputValue.trim());
+    getDisplayText(selectedItem) !== inputValue.trim();
 
   // Função para lidar com o blur (perda de foco)
   const handleBlur = (e) => {
     const relatedTarget = e.relatedTarget;
     if (!relatedTarget || !relatedTarget.closest('[data-dropdown]')) {
-      setTimeout(() => setIsOpen(false), 150);
+      setTimeout(() => {
+        setIsOpen(false);
+        // Se não selecionou nada válido, volta para o valor original
+        if (!selectedItem) {
+          setInputValue('');
+        } else {
+          setInputValue(getDisplayText(selectedItem));
+        }
+      }, 150);
     }
   };
 
-  // Funções para os efeitos hover
-  const handleTagButtonMouseOver = (e) => {
-    e.target.style.backgroundColor = '#d1d9e6';
+  // Função para lidar com o foco
+  const handleFocus = () => {
+    setIsOpen(true);
+    // Limpa o input para facilitar a busca
+    setInputValue('');
   };
 
-  const handleTagButtonMouseOut = (e) => {
+  // Funções para os efeitos hover
+  const handleClearButtonMouseOver = (e) => {
+    e.target.style.backgroundColor = '#f0f0f0';
+  };
+
+  const handleClearButtonMouseOut = (e) => {
     e.target.style.backgroundColor = 'transparent';
   };
 
@@ -167,53 +178,43 @@ const MultiSelectCombobox = ({
     position: 'relative'
   };
 
-  const tagsContainerStyle = {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '0.5rem',
-    marginBottom: '0.5rem'
-  };
-
-  const tagStyle = {
-    backgroundColor: '#e1e6f0',
-    color: '#2f82ff',
-    padding: '0.25rem 0.75rem',
-    borderRadius: '1rem',
-    fontSize: '0.875rem',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem'
-  };
-
-  const tagButtonStyle = {
-    background: 'none',
-    border: 'none',
-    borderRadius: '50%',
-    padding: '0.125rem',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center'
-  };
-
   const inputContainerStyle = {
     position: 'relative'
   };
 
   const inputStyle = {
     width: '100%',
-    padding: '0.5rem 2rem 0.5rem 0.75rem',
+    padding: '0.5rem 4rem 0.5rem 0.75rem',
     border: '1px solid #2f82ff',
     borderRadius: '4px',
-    fontSize: '1.1rem',
+    fontSize: '1rem',
     fontFamily: 'inherit'
   };
 
-  const chevronButtonStyle = {
+  const buttonContainerStyle = {
     position: 'absolute',
     right: '0.5rem',
     top: '50%',
     transform: 'translateY(-50%)',
+    display: 'flex',
+    gap: '0.25rem'
+  };
+
+  const clearButtonStyle = {
+    background: 'none',
+    border: 'none',
+    color: '#999',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '20px',
+    height: '20px',
+    borderRadius: '50%',
+    fontSize: '16px'
+  };
+
+  const chevronButtonStyle = {
     background: 'none',
     border: 'none',
     color: '#666',
@@ -246,20 +247,12 @@ const MultiSelectCombobox = ({
     color: '#ff6b35'
   };
 
-  const createOptionHoverStyle = {
-    backgroundColor: '#f0f8ff'
-  };
-
   const optionStyle = {
     padding: '0.5rem 0.75rem',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between'
-  };
-
-  const optionHoverStyle = {
-    backgroundColor: '#f5f5f5'
   };
 
   const selectedOptionStyle = {
@@ -275,26 +268,6 @@ const MultiSelectCombobox = ({
 
   return (
     <div style={containerStyle}>
-      {/* Tags dos itens selecionados */}
-      {selectedItems.length > 0 && (
-        <div style={tagsContainerStyle}>
-          {selectedItems.map((item, index) => (
-            <div key={index} style={tagStyle}>
-              <span>{getDisplayText(item)}</span>
-              <button
-                type="button"
-                onClick={() => removeSelectedItem(item)}
-                style={tagButtonStyle}
-                onMouseOver={handleTagButtonMouseOver}
-                onMouseOut={handleTagButtonMouseOut}
-              >
-                ×
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
       {/* Input principal */}
       <div style={inputContainerStyle}>
         <input
@@ -302,25 +275,41 @@ const MultiSelectCombobox = ({
           value={inputValue}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          onFocus={() => setIsOpen(true)}
+          onFocus={handleFocus}
           onBlur={handleBlur}
           placeholder={placeholder}
           style={inputStyle}
           className={className}
         />
-        <button
-          type="button"
-          onClick={() => setIsOpen(!isOpen)}
-          style={chevronButtonStyle}
-        >
-          ▼
-        </button>
+        <div style={buttonContainerStyle}>
+          {/* Botão para limpar */}
+          {selectedItem && (
+            <button
+              type="button"
+              onClick={clearSelection}
+              style={clearButtonStyle}
+              onMouseOver={handleClearButtonMouseOver}
+              onMouseOut={handleClearButtonMouseOut}
+              title="Limpar seleção"
+            >
+              ×
+            </button>
+          )}
+          {/* Botão dropdown */}
+          <button
+            type="button"
+            onClick={() => setIsOpen(!isOpen)}
+            style={chevronButtonStyle}
+          >
+            ▼
+          </button>
+        </div>
       </div>
 
       {/* Dropdown */}
       {isOpen && (
         <div data-dropdown style={dropdownStyle}>
-          {/* Opção para criar novo produto */}
+          {/* Opção para criar novo item */}
           {isNewOption && (
             <div
               onClick={createNewOption}
@@ -336,9 +325,7 @@ const MultiSelectCombobox = ({
           {/* Lista de opções filtradas */}
           {filteredOptions.map((option, index) => {
             const displayText = getDisplayText(option);
-            const isSelected = selectedItems.some(item => 
-              getDisplayText(item) === displayText
-            );
+            const isSelected = getDisplayText(selectedItem) === displayText;
 
             return (
               <div
@@ -369,4 +356,4 @@ const MultiSelectCombobox = ({
   );
 };
 
-export { MultiSelectCombobox };
+export { SingleSelectCombobox };

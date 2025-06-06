@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MultiSelectCombobox } from '../MultiSelectComboBox/MultiSelectCombobox.jsx';
+import { SingleSelectCombobox } from '../SingleSelectComboBox/SingleSelectCombobox';
 
 // Lista temporária caso o backend não funcione
 const PRODUTOS_FALLBACK = [
@@ -10,12 +10,29 @@ const PRODUTOS_FALLBACK = [
   'Bolo Red Velvet'
 ];
 
+const PESOS_DISPONIVEIS = [
+  '5kg',
+  '10kg',
+  '15kg',
+  '20kg'
+];
+
 export default function EventForm({ inputData, onSubmit, children }) {
   const [status, setStatus] = useState(inputData?.status ?? '');
-  const [selectedProducts, setSelectedProducts] = useState([]);
   const [availableProducts, setAvailableProducts] = useState(PRODUTOS_FALLBACK);
+  const [pesosDisponiveis, setPesosDisponiveis] = useState(PESOS_DISPONIVEIS);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [error, setError] = useState(null);
+
+  // Estado para gerenciar os bolos do pedido (modificação principal)
+  const [bolosPedido, setBolosPedido] = useState([
+    { 
+      id: 1, 
+      bolo: '', // String simples para SingleSelectCombobox
+      peso: '', // String simples para SingleSelectCombobox
+      descricao: ''
+    }
+  ]);
 
   // Função para buscar produtos do backend
   const fetchProducts = async () => {
@@ -36,12 +53,10 @@ export default function EventForm({ inputData, onSubmit, children }) {
         console.log('Produtos processados:', productNames);
       } else {
         console.warn('Formato de dados inesperado:', data);
-        // Mantém produtos fallback
       }
     } catch (error) {
       console.error('Erro ao buscar produtos:', error);
       setError(error.message);
-      // Mantém produtos fallback em caso de erro
     } finally {
       setIsLoadingProducts(false);
     }
@@ -68,39 +83,86 @@ export default function EventForm({ inputData, onSubmit, children }) {
 
       const data = await response.json();
       console.log('Produto criado:', data);
-
-      // Adiciona à lista local
       setAvailableProducts(prev => [...prev, productName]);
-      
-      // Adiciona aos selecionados
-      setSelectedProducts(prev => [...prev, productName]);
       
     } catch (error) {
       console.error('Erro ao criar produto:', error);
-      // Adiciona apenas localmente se der erro
       setAvailableProducts(prev => [...prev, productName]);
-      setSelectedProducts(prev => [...prev, productName]);
+    }
+  };
+
+  // Funções para gerenciar bolos
+  const adicionarBolo = () => {
+    const novoId = Math.max(...bolosPedido.map(b => b.id)) + 1;
+    setBolosPedido([
+      ...bolosPedido,
+      { 
+        id: novoId, 
+        bolo: '', // String vazia para SingleSelectCombobox
+        peso: '', // String vazia para SingleSelectCombobox
+        descricao: ''
+      }
+    ]);
+  };
+
+  const removerBolo = (id) => {
+    if (bolosPedido.length > 1) {
+      setBolosPedido(bolosPedido.filter(b => b.id !== id));
+    }
+  };
+
+  const atualizarBolo = (id, campo, valor) => {
+    setBolosPedido(bolosPedido.map(bolo => 
+      bolo.id === id ? { ...bolo, [campo]: valor } : bolo
+    ));
+  };
+
+  // Função para quando um novo produto é criado
+  const handleCreateNewProduct = (newProductName) => {
+    console.log('Criando novo produto:', newProductName);
+    createNewProduct(newProductName);
+  };
+
+  // Função para quando um novo peso é criado
+  const handleCreateNewPeso = (newPeso) => {
+    console.log('Criando novo peso:', newPeso);
+    if (newPeso && !pesosDisponiveis.includes(newPeso)) {
+      setPesosDisponiveis([...pesosDisponiveis, newPeso]);
     }
   };
 
   useEffect(() => {
     setStatus(inputData?.status ?? '');
-    
-    // Busca produtos do backend
     fetchProducts();
     
     // Se está editando um pedido existente
     if (inputData) {
-      if (inputData.products) {
+      if (inputData.bolosDetalhados) {
+        // Novo formato - já tem dados detalhados
+        try {
+          const bolosDetalhados = JSON.parse(inputData.bolosDetalhados);
+          const bolosFormatados = bolosDetalhados.map((bolo, index) => ({
+            id: index + 1,
+            bolo: bolo.nome || bolo.bolo || '', // String simples
+            peso: bolo.peso || '', // String simples
+            descricao: bolo.descricao || ''
+          }));
+          setBolosPedido(bolosFormatados);
+        } catch (error) {
+          console.error('Erro ao parsear bolos detalhados:', error);
+        }
+      } else if (inputData.products) {
+        // Formato antigo - converte produtos para o novo formato
         const products = inputData.products.split('\n').filter(p => p.trim());
-        setSelectedProducts(products);
-        console.log('Produtos carregados para edição:', products);
-      } else if (inputData.description) {
-        // Compatibilidade com formato antigo
-        const lines = inputData.description.split('\n').filter(p => p.trim());
-        if (lines.length <= 5 && lines.every(line => line.length < 50)) {
-          setSelectedProducts(lines);
-          console.log('Produtos do formato antigo:', lines);
+        const bolosExistentes = products.map((produto, index) => ({
+          id: index + 1,
+          bolo: produto, // String simples
+          peso: '', // String vazia - será preenchido pelo usuário
+          descricao: ''
+        }));
+        
+        if (bolosExistentes.length > 0) {
+          setBolosPedido(bolosExistentes);
         }
       }
     }
@@ -112,23 +174,27 @@ export default function EventForm({ inputData, onSubmit, children }) {
     const formData = new FormData(event.target);
     const data = Object.fromEntries(formData);
 
-    // Adiciona produtos como campo separado
-    data.products = selectedProducts.join('\n');
+    // Constrói os produtos no formato detalhado
+    const bolosValidos = bolosPedido.filter(bolo => 
+      bolo.bolo && bolo.peso
+    );
+    
+    // Para manter compatibilidade com o sistema atual
+    data.products = bolosValidos.map(bolo => bolo.bolo).join('\n');
+    
+    // Adiciona dados detalhados dos bolos (NOVO CAMPO)
+    data.bolosDetalhados = JSON.stringify(bolosValidos.map(bolo => ({
+      nome: bolo.bolo,
+      peso: bolo.peso,
+      descricao: bolo.descricao
+    })));
+    
     data.status = status;
 
     console.log('Dados do formulário:', data);
+    console.log('Bolos detalhados:', bolosValidos);
     onSubmit({ event: data });
   }
-
-  const handleProductsChange = (products) => {
-    console.log('Produtos selecionados mudaram:', products);
-    setSelectedProducts(products);
-  };
-
-  const handleCreateNewProduct = (newProductName) => {
-    console.log('Solicitação para criar produto:', newProductName);
-    createNewProduct(newProductName);
-  };
 
   return (
     <form id="event-form" onSubmit={handleSubmit}>
@@ -143,11 +209,10 @@ export default function EventForm({ inputData, onSubmit, children }) {
         />
       </div>
 
-      {/* Campo de seleção de produtos */}
+      {/* SEÇÃO DE SELEÇÃO DE BOLOS MODIFICADA */}
       <div className="control">
-        <label htmlFor="products">Produtos</label>
+        <label>Seleção de Bolos</label>
         
-        {/* Debug info - CORRIGIDO: removido p dentro de p */}
         {error && (
           <div style={{ 
             color: 'red', 
@@ -162,59 +227,142 @@ export default function EventForm({ inputData, onSubmit, children }) {
           </div>
         )}
         
-        {isLoadingProducts ? (
+        {isLoadingProducts && (
           <div style={{ color: '#666', padding: '0.5rem' }}>
             Carregando produtos...
           </div>
-        ) : (
-          <>
-            <MultiSelectCombobox
-              options={availableProducts}
-              selectedItems={selectedProducts}
-              onChange={handleProductsChange}
-              onCreateNew={handleCreateNewProduct}
-              placeholder="Digite ou selecione os bolos..."
-              createText="Criar novo bolo"
-              noResultsText="Nenhum bolo encontrado"
-              allowCreate={true}
-            />
-            
-            {/* Debug: mostra produtos disponíveis - CORRIGIDO */}
-            <div style={{ 
-              color: '#999', 
-              fontSize: '0.75rem',
-              marginTop: '0.25rem'
+        )}
+
+        {/* Lista de bolos do pedido */}
+        <div className="bolos-container" style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '1rem', marginBottom: '1rem' }}>
+          {bolosPedido.map((boloItem, index) => (
+            <div key={boloItem.id} className="bolo-item" style={{ 
+              backgroundColor: '#f8f9fa', 
+              padding: '1rem', 
+              marginBottom: '1rem', 
+              borderRadius: '6px',
+              border: '1px solid #e9ecef'
             }}>
-              Produtos disponíveis: {availableProducts.length} | 
-              Selecionados: {selectedProducts.length}
+              {/* Cabeçalho do bolo */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h4 style={{ margin: 0, color: '#495057' }}>Bolo {index + 1}</h4>
+                {bolosPedido.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removerBolo(boloItem.id)}
+                    className="btn-remover-bolo"
+                    title="Remover bolo"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+
+              {/* Seleção de Bolo - USANDO SingleSelectCombobox */}
+              <div className="bolo-field" style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+                  Escolher Bolo *
+                </label>
+                <SingleSelectCombobox
+                  options={availableProducts}
+                  selectedItem={boloItem.bolo}
+                  onChange={(selected) => atualizarBolo(boloItem.id, 'bolo', selected)}
+                  onCreateNew={handleCreateNewProduct}
+                  placeholder="Digite ou selecione um bolo..."
+                  createText="Criar novo bolo"
+                  noResultsText="Nenhum bolo encontrado"
+                  allowCreate={true}
+                  maxHeight="10rem"
+                />
+                {!boloItem.bolo && (
+                  <div style={{ color: '#dc3545', fontSize: '0.875rem', marginTop: '0.25rem' }}>
+                    Selecione um bolo
+                  </div>
+                )}
+              </div>
+
+              {/* Seleção de Peso - USANDO SingleSelectCombobox */}
+              <div className="peso-field" style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+                  Escolher Peso *
+                </label>
+                <SingleSelectCombobox
+                  options={pesosDisponiveis}
+                  selectedItem={boloItem.peso}
+                  onChange={(selected) => atualizarBolo(boloItem.id, 'peso', selected)}
+                  onCreateNew={handleCreateNewPeso}
+                  placeholder="Digite ou selecione um peso..."
+                  createText="Criar novo peso"
+                  noResultsText="Nenhum peso encontrado"
+                  allowCreate={true}
+                  maxHeight="8rem"
+                />
+                {!boloItem.peso && (
+                  <div style={{ color: '#dc3545', fontSize: '0.875rem', marginTop: '0.25rem' }}>
+                    Selecione um peso
+                  </div>
+                )}
+              </div>
+
+              {/* Descrição específica do bolo */}
+              <div className="descricao-field">
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+                  Descrição do Bolo
+                </label>
+                <textarea
+                  value={boloItem.descricao}
+                  onChange={(e) => atualizarBolo(boloItem.id, 'descricao', e.target.value)}
+                  placeholder="Descreva detalhes específicos deste bolo (sabor, decoração, observações...)"
+                  rows={3}
+                  style={{ 
+                    width: '100%', 
+                    padding: '0.5rem', 
+                    borderRadius: '4px', 
+                    border: '1px solid #ced4da',
+                    resize: 'vertical'
+                  }}
+                />
+              </div>
             </div>
-          </>
-        )}
-        
-        {selectedProducts.length === 0 && (
-          <div style={{ 
-            color: '#666', 
-            fontSize: '0.875rem',
-            marginTop: '0.25rem',
-            fontStyle: 'italic'
-          }}>
-            Selecione pelo menos um produto
+          ))}
+
+          {/* Botão para adicionar mais bolos */}
+          <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+            <button
+              type="button"
+              onClick={adicionarBolo}
+              className="btn-adicionar-bolo"
+            >
+              <span style={{ fontSize: '1.2rem' }}>+</span>
+              Adicionar mais bolos
+            </button>
           </div>
-        )}
+        </div>
+
+        {/* Debug info */}
+        <div style={{ 
+          color: '#999', 
+          fontSize: '0.75rem',
+          marginTop: '0.25rem'
+        }}>
+          Produtos disponíveis: {availableProducts.length} | 
+          Bolos no pedido: {bolosPedido.filter(b => b.bolo && b.peso).length}
+        </div>
       </div>
 
-      {/* Campo de descrição/observações */}
+      {/* Campo de observações gerais (mantido como estava) */}
       <div className="control">
-        <label htmlFor="description">Observações Adicionais</label>
+        <label htmlFor="description">Observações Gerais do Pedido</label>
         <textarea
           id="description"
           name="description"
-          placeholder="Observações especiais, decoração, instruções especiais, etc..."
+          placeholder="Observações gerais sobre o pedido (entrega, pagamento, etc...)"
           rows={3}
           defaultValue={inputData?.description ?? ''}
         />
       </div>
 
+      {/* Campos originais mantidos */}
       <div className="controls-row">
         <div className="control">
           <label htmlFor="date">Data</label>

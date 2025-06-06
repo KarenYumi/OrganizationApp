@@ -110,6 +110,7 @@ ul {
 }
 
 
+
 .event-item-content {
   height: 100%;
   padding: 0.8rem;
@@ -660,4 +661,78 @@ section.kanban > * {
 .event-item-description strong {
   color: #2f82ff;
   font-weight: 600;
+}
+
+/* APENAS OS ESTILOS ESSENCIAIS PARA A NOVA FUNCIONALIDADE */
+
+/* Container dos bolos - NÃO ALTERA GRID EXISTENTE */
+.bolos-container {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: #ffffff;
+}
+
+/* Item individual de cada bolo */
+.bolo-item {
+  background: #f8f9fa !important;
+  padding: 1rem !important;
+  margin-bottom: 1rem !important;
+  border-radius: 6px !important;
+  border: 1px solid #e9ecef !important;
+}
+
+/* Botão X para remover bolo */
+.btn-remover-bolo {
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-remover-bolo:hover {
+  background: #c82333;
+}
+
+/* Botão + para adicionar mais bolos */
+.btn-adicionar-bolo {
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-adicionar-bolo:hover {
+  background: #0056b3;
+}
+
+/* Para exibição dos bolos detalhados na página de detalhes */
+.bolo-detail-item {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-left: 4px solid #007bff;
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.bolo-peso-badge {
+  background: #007bff;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
 }

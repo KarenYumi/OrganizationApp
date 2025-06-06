@@ -1,1 +1,23 @@
-[{"id":"e1","title":"Pedido da Ana","description":"Bolo de Soja e Bolo de queijo com goiabada","date":"2025-04-05","time":"18:00","address":"Rua da Ana, 123","status":"Pendente"},{"id":"e4","title":"Pedido da Amanda","description":"Bolo de Chocolate sem açucar","date":"2023-05-03","time":"18:30","address":"Rua Mercedes de Bens, 10","status":"Cancelado"},{"id":"6018","title":"Pedido do Pedro","description":"Bolo de Sorbet","date":"2025-04-02","time":"17:06","address":"The second with the third on Brooklin","status":"Pendente"},{"id":"6647","title":"Pedido do José","description":"Bolo RedVelvet\nBolo de Laranja\n","date":"2025-03-27","time":"20:10","address":"Some Street 2, Some City","status":"A fazer"},{"id":"4394","title":"aaa","description":"aaa","date":"2025-03-05","time":"16:10","address":"aaa","status":"Entregue"},{"id":"9415","title":"saasa","description":"assaasasas","date":"2025-03-27","time":"20:29","address":"asasasas","status":"Pendente"},{"id":"3901","title":"aaaaa","description":"aaa","date":"2025-05-22","time":"10:35","address":"Rua PAulista, 123","status":"Pendente"},{"id":"2439","title":"aaaaaa","description":"aaa","date":"2025-05-07","time":"12:53","address":"Rua Mercedes de Bens, 10","status":"Pendente"}]
+[
+  {
+    "id": "1234",
+    "title": "Pedido da Maria",
+    "description": "Observações gerais sobre o pedido - entrega às 15h",
+    "products": "Bolo de Chocolate\nBolo de Morango",
+    "bolosDetalhados": "[{\"nome\":\"Bolo de Chocolate\",\"peso\":\"2kg\",\"descricao\":\"Com cobertura de brigadeiro e morangos\"},{\"nome\":\"Bolo de Morango\",\"peso\":\"1.5kg\",\"descricao\":\"Massa branca com recheio de morango e chantilly\"}]",
+    "date": "2025-06-10",
+    "time": "15:00",
+    "address": "Rua das Flores, 123",
+    "status": "A fazer"
+  },
+  {
+    "id": "5678",
+    "title": "Pedido do João (formato antigo)",
+    "description": "Bolo para aniversário",
+    "products": "Bolo Red Velvet\nBolo de Cenoura",
+    "date": "2025-06-12",
+    "time": "18:00",
+    "address": "Av. Principal, 456",
+    "status": "Pendente"
+  }
+]

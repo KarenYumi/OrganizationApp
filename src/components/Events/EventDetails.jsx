@@ -7,7 +7,76 @@ import { deleteEvent, fetchEvent, queryClient } from '../util/http.js';
 import ErrorBlock from '../UI/ErrorBlock.jsx';
 import Modal from '../UI/Modal.jsx';
 import Kanban from '../Kanban/Kanban.jsx';
-import ProductsList from '../Products/ProductsList.jsx';
+import ProductsList from '../Products/ProductsList.jsx'; // MANTIVE SEU IMPORT ORIGINAL
+
+// APENAS adicionei este componente para bolos detalhados
+function BolosDetailsList({ bolosDetalhados }) {
+  if (!bolosDetalhados || bolosDetalhados.length === 0) {
+    return (
+      <p style={{ color: '#666', fontStyle: 'italic' }}>
+        Nenhum bolo especificado com detalhes
+      </p>
+    );
+  }
+
+  return (
+    <div className="bolos-details-list">
+      {bolosDetalhados.map((bolo, index) => (
+        <div key={index} className="bolo-detail-item" style={{
+          backgroundColor: '#f8f9fa',
+          border: '1px solid #dee2e6',
+          borderRadius: '8px',
+          padding: '1rem',
+          marginBottom: '1rem',
+          borderLeft: '4px solid #007bff'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
+            <h4 style={{ 
+              margin: 0, 
+              color: '#495057',
+              fontSize: '1.1rem',
+              fontWeight: 'bold'
+            }}>
+              {bolo.nome}
+            </h4>
+            <span style={{
+              backgroundColor: '#007bff',
+              color: 'white',
+              padding: '0.25rem 0.75rem',
+              borderRadius: '12px',
+              fontSize: '0.875rem',
+              fontWeight: '500'
+            }}>
+              {bolo.peso}
+            </span>
+          </div>
+          
+          {bolo.descricao && (
+            <p style={{ 
+              margin: 0, 
+              color: '#6c757d',
+              fontSize: '0.95rem',
+              lineHeight: '1.4'
+            }}>
+              {bolo.descricao}
+            </p>
+          )}
+          
+          {!bolo.descricao && (
+            <p style={{ 
+              margin: 0, 
+              color: '#adb5bd',
+              fontSize: '0.875rem',
+              fontStyle: 'italic'
+            }}>
+              Sem descrição específica
+            </p>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function EventDetails() {
   const [isDeleting, setIsDeleting] = useState(false);
@@ -90,8 +159,30 @@ export default function EventDetails() {
               : ""
     }`;
 
-  // Extrai produtos e descrição
-  const products = data?.products ? data.products.split('\n').filter(p => p.trim()) : [];
+  // Processa os dados dos bolos (ÚNICA MODIFICAÇÃO PRINCIPAL)
+  let bolosDetalhados = [];
+  let products = [];
+  let temBolosDetalhados = false;
+
+  if (data) {
+    // Primeiro tenta buscar bolos detalhados (novo formato)
+    if (data.bolosDetalhados) {
+      try {
+        bolosDetalhados = JSON.parse(data.bolosDetalhados);
+        temBolosDetalhados = true;
+        console.log('Bolos detalhados encontrados:', bolosDetalhados);
+      } catch (error) {
+        console.error('Erro ao parsear bolos detalhados:', error);
+        temBolosDetalhados = false;
+      }
+    }
+
+    // Se não tem bolos detalhados, usa formato antigo (SEU CÓDIGO ORIGINAL)
+    if (!temBolosDetalhados && data.products) {
+      products = data.products.split('\n').filter(p => p.trim());
+    }
+  }
+
   const description = data?.description || '';
 
   if (data) {
@@ -111,25 +202,31 @@ export default function EventDetails() {
               <time>{formattedDate} - {data.time}</time>
             </div>
 
-            {/* Seção de produtos */}
+            {/* Seção de produtos - MODIFICADA para suportar bolos detalhados */}
             <div id="event-details-products" style={{ margin: '1.5rem 0' }}>
               <h3 style={{ 
                 fontSize: '1.3rem', 
                 color: '#2f82ff', 
                 marginBottom: '0.5rem' 
               }}>
-                Produtos:
+                {temBolosDetalhados ? 'Bolos do Pedido:' : 'Produtos:'}
               </h3>
-              {products.length > 0 ? (
-                <ProductsList products={products} />
+              
+              {temBolosDetalhados ? (
+                <BolosDetailsList bolosDetalhados={bolosDetalhados} />
               ) : (
-                <p style={{ color: '#666', fontStyle: 'italic' }}>
-                  Nenhum produto especificado
-                </p>
+                // USA SEU COMPONENTE ORIGINAL
+                products.length > 0 ? (
+                  <ProductsList products={products} />
+                ) : (
+                  <p style={{ color: '#666', fontStyle: 'italic' }}>
+                    Nenhum produto especificado
+                  </p>
+                )
               )}
             </div>
 
-            {/* Seção de observações/descrição */}
+            {/* Seção de observações/descrição - MANTIDA IGUAL */}
             {description && (
               <div id="event-details-description" style={{ margin: '1.5rem 0' }}>
                 <h3 style={{ 
