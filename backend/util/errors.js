@@ -1,13 +1,10 @@
-export class NotFoundError {
-  constructor(message) {
-    this.message = message;
-    this.status = 404;
-  }
+import fs from 'node:fs/promises';
+
+export async function readData() {
+  const data = await fs.readFile('users.json', 'utf8');
+  return JSON.parse(data);
 }
 
-export class NotAuthError {
-  constructor(message) {
-    this.message = message;
-    this.status = 401;
-  }
+export async function writeData(data) {
+  await fs.writeFile('users.json', JSON.stringify(data));
 }

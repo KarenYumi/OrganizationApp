@@ -1,41 +1,35 @@
-import { hash } from 'bcryptjs';
-import { v4 as generateId } from 'uuid';
+import fs from 'node:fs/promises';
 
-import { NotFoundError } from '../util/errors.js';
-import { readData, writeData } from './util.js';
-
-// Função para adicionar um novo usuário
-export async function addUser(data) {
-  const storedData = await readData();
-  const userId = generateId();
-  const hashedPw = await hash(data.password, 12);
-
-  if (!storedData.users) {
-    storedData.users = [];
+export async function readData() {
+  try {
+    const data = await fs.readFile('users.json', 'utf8');
+    const parsedData = JSON.parse(data);
+    
+    // Se o arquivo tem a estrutura {"users": [...]}
+    if (parsedData.users && Array.isArray(parsedData.users)) {
+      return parsedData.users;
+    }
+    
+    // Se o arquivo é um array direto [...]
+    if (Array.isArray(parsedData)) {
+      return parsedData;
+    }
+    
+    // Se não é nem um nem outro, retorna array vazio
+    return [];
+  } catch (error) {
+    console.log('Erro ao ler users.json, criando novo arquivo...');
+    // Se o arquivo não existe, cria um novo
+    const initialData = { users: [] };
+    await fs.writeFile('users.json', JSON.stringify(initialData, null, 2));
+    return [];
   }
-
-  storedData.users.push({ 
-    id: userId, 
-    email: data.email, 
-    password: hashedPw 
-  });
-
-  await writeData(storedData);
-  return { id: userId, email: data.email };
 }
 
-// Função para buscar um usuário pelo e-mail
-export async function getUserByEmail(email) {
-  const storedData = await readData();
-
-  if (!storedData.users || storedData.users.length === 0) {
-    throw new NotFoundError('No users found.');
-  }
-
-  const user = storedData.users.find((u) => u.email === email);
-  if (!user) {
-    throw new NotFoundError('User not found for email: ' + email);
-  }
-
-  return user;
+export async function writeData(users) {
+  // Sempre salva na estrutura {"users": [...]}
+  const dataToWrite = {
+    users: users
+  };
+  await fs.writeFile('users.json', JSON.stringify(dataToWrite, null, 2));
 }

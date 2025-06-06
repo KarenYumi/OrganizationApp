@@ -1,45 +1,94 @@
-import pkg from 'jsonwebtoken';
-const { sign, verify } = pkg;
-import { compare } from 'bcryptjs';
-import { NotAuthError } from './errors.js';
+import { Router } from 'express';
+import { hash } from 'bcryptjs';
+import { createJSONToken, isValidPassword } from '../util/auth.js';
+import { readData, writeData } from '../util/users.js';
 
-const KEY = 'supersecret';
+const router = Router();
 
-export function createJSONToken(email) {
-  return sign({ email }, KEY, { expiresIn: '1h' });
-}
+// POST /auth/signup
+router.post('/signup', async (req, res, next) => {
+  const data = req.body;
+  let { email, password } = data;
 
-export function validateJSONToken(token) {
-  return verify(token, KEY);
-}
-
-export function isValidPassword(password, storedPassword) {
-  return compare(password, storedPassword);
-}
-
-export function checkAuth(req, res, next) {
-  if (req.method === 'OPTIONS') {
-    return next();
+  if (!email || email.trim().length === 0 || !email.includes('@') || 
+      !password || password.trim().length < 7) {
+    return res.status(422).json({
+      message: 'Invalid input - password should be at least 7 characters long.',
+      errors: {
+        credentials: 'Invalid email or password entered.'
+      }
+    });
   }
-  if (!req.headers.authorization) {
-    console.log('NOT AUTH. AUTH HEADER MISSING.');
-    return next(new NotAuthError('Not authenticated.'));
-  }
-  const authFragments = req.headers.authorization.split(' ');
 
-  if (authFragments.length !== 2) {
-    console.log('NOT AUTH. AUTH HEADER INVALID.');
-    return next(new NotAuthError('Not authenticated.'));
-  }
-  const authToken = authFragments[1];
   try {
-    const validatedToken = validateJSONToken(authToken);
-    req.token = validatedToken;
+    const existingUsers = await readData();
+    
+    if (existingUsers.find(user => user.email === email)) {
+      return res.status(422).json({
+        message: 'User exists already',
+        errors: {
+          credentials: 'User with the email address exists already.'
+        }
+      });
+    }
+
+    const hashedPw = await hash(password, 12);
+    const newUser = {
+      email: email,
+      password: hashedPw
+    };
+    
+    existingUsers.push(newUser);
+    await writeData(existingUsers);
+    
+    const authToken = createJSONToken(email);
+    res.status(201).json({ message: 'User created.', user: { email }, token: authToken });
   } catch (error) {
-    console.log('NOT AUTH. TOKEN INVALID.');
-    return next(new NotAuthError('Not authenticated.'));
+    next(error);
   }
-  next();
-}
+});
 
+// POST /auth/login
+router.post('/login', async (req, res, next) => {
+  const { email, password } = req.body;
 
+  if (!email || !password) {
+    return res.status(422).json({
+      message: 'Invalid credentials.',
+      errors: {
+        credentials: 'Invalid email or password entered.'
+      }
+    });
+  }
+
+  try {
+    const existingUsers = await readData();
+    const user = existingUsers.find(user => user.email === email);
+
+    if (!user) {
+      return res.status(422).json({
+        message: 'Invalid credentials.',
+        errors: {
+          credentials: 'Invalid email or password entered.'
+        }
+      });
+    }
+
+    const pwIsValid = await isValidPassword(password, user.password);
+    if (!pwIsValid) {
+      return res.status(422).json({
+        message: 'Invalid credentials.',
+        errors: {
+          credentials: 'Invalid email or password entered.'
+        }
+      });
+    }
+
+    const token = createJSONToken(email);
+    res.json({ message: 'User logged in.', user: { email }, token });
+  } catch (error) {
+    next(error);
+  }
+});
+
+export default router;
