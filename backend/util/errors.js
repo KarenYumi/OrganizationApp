@@ -1,10 +1,23 @@
-import fs from 'node:fs/promises';
-
-export async function readData() {
-  const data = await fs.readFile('users.json', 'utf8');
-  return JSON.parse(data);
+export class NotAuthError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'NotAuthError';
+    this.status = 401;
+  }
 }
 
-export async function writeData(data) {
-  await fs.writeFile('users.json', JSON.stringify(data));
+export class ValidationError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'ValidationError';
+    this.status = 422;
+  }
+}
+
+export class NotFoundError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'NotFoundError';
+    this.status = 404;
+  }
 }
