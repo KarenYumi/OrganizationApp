@@ -1,7 +1,7 @@
 import express from 'express';
-import { addUser, getUserByEmail } from'../data/user.js';
-import { createJSONToken, isValidPassword } from'../util/auth.js';
-import { isValidEmail, isValidText } from'../util/validation.js';
+import { addUser, getUserByEmail } from '../data/user.js';
+import { createJSONToken, isValidPassword } from '../util/auth.js';
+import { isValidEmail, isValidText } from '../util/validation.js';
 
 const router = express.Router();
 

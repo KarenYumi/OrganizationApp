@@ -8,4 +8,3 @@ export async function readData() {
 export async function writeData(data) {
   await fs.writeFile('users.json', JSON.stringify(data));
 }
-

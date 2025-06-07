@@ -1,75 +1,34 @@
-import fs from 'node:fs/promises';
 import { hash } from 'bcryptjs';
+import { v4 as generateId } from 'uuid';
+import { NotFoundError } from '../util/errors.js';
+import { readData, writeData } from './util.js';
 
-const USERS_FILE = './users.json';
-
-export async function readData() {
-  try {
-    const data = await fs.readFile(USERS_FILE, 'utf8');
-    const parsedData = JSON.parse(data);
-    
-    // Se o arquivo tem a estrutura {"users": [...]}
-    if (parsedData.users && Array.isArray(parsedData.users)) {
-      return parsedData.users;
-    }
-    
-    // Se o arquivo é um array direto [...]
-    if (Array.isArray(parsedData)) {
-      return parsedData;
-    }
-    
-    // Se não é nem um nem outro, retorna array vazio
-    return [];
-  } catch (error) {
-    console.log('Erro ao ler users.json, criando novo arquivo...');
-    // Se o arquivo não existe, cria um novo
-    const initialData = { users: [] };
-    await fs.writeFile(USERS_FILE, JSON.stringify(initialData, null, 2));
-    return [];
+// Função para adicionar um novo usuário
+export async function addUser(data) {
+  const storedData = await readData();
+  const userId = generateId();
+  const hashedPw = await hash(data.password, 12);
+  if (!storedData.users) {
+    storedData.users = [];
   }
+  storedData.users.push({ 
+    id: userId, 
+    email: data.email, 
+    password: hashedPw 
+  });
+  await writeData(storedData);
+  return { id: userId, email: data.email };
 }
 
-export async function writeData(users) {
-  // Sempre salva na estrutura {"users": [...]}
-  const dataToWrite = {
-    users: users
-  };
-  await fs.writeFile(USERS_FILE, JSON.stringify(dataToWrite, null, 2));
-}
-
-export async function addUser(userData) {
-  const users = await readData();
-  
-  // Hash da senha antes de salvar
-  const hashedPassword = await hash(userData.password, 12);
-  
-  const newUser = {
-    id: Date.now().toString(), // ID simples baseado em timestamp
-    email: userData.email,
-    password: hashedPassword
-  };
-  
-  users.push(newUser);
-  await writeData(users);
-  
-  // Retorna o usuário sem a senha
-  const { password, ...userWithoutPassword } = newUser;
-  return userWithoutPassword;
-}
-
+// Função para buscar um usuário pelo e-mail
 export async function getUserByEmail(email) {
-  const users = await readData();
-  const user = users.find(user => user.email === email);
-  
-  if (!user) {
-    const error = new Error('User not found');
-    error.code = 404;
-    throw error;
+  const storedData = await readData();
+  if (!storedData.users || storedData.users.length === 0) {
+    throw new NotFoundError('No users found.');
   }
-  
+  const user = storedData.users.find((u) => u.email === email);
+  if (!user) {
+    throw new NotFoundError('User not found for email: ' + email);
+  }
   return user;
-}
-
-export async function getAllUsers() {
-  return await readData();
 }

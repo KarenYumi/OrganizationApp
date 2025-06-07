@@ -14,4 +14,3 @@ export function isValidImageUrl(value) {
 export function isValidEmail(value) {
   return value && value.includes('@');
 }
-

@@ -1,23 +1,13 @@
-export class NotAuthError extends Error {
+export class NotFoundError {
   constructor(message) {
-    super(message);
-    this.name = 'NotAuthError';
-    this.status = 401;
-  }
-}
-
-export class ValidationError extends Error {
-  constructor(message) {
-    super(message);
-    this.name = 'ValidationError';
-    this.status = 422;
-  }
-}
-
-export class NotFoundError extends Error {
-  constructor(message) {
-    super(message);
-    this.name = 'NotFoundError';
+    this.message = message;
     this.status = 404;
+  }
+}
+
+export class NotAuthError {
+  constructor(message) {
+    this.message = message;
+    this.status = 401;
   }
 }

@@ -6,7 +6,7 @@ import router from './routes/auth.js';
 
 const app = express();
 
-// CORS configurado corretamente - COMO ESTAVA
+// CORS configurado corretamente
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -16,7 +16,14 @@ app.use(cors({
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
-// VERIFICAÇÃO DO ARQUIVO products.json na inicialização - COMO ESTAVA
+// MIDDLEWARE DE DEBUG - Para ver todas as requisições
+app.use((req, res, next) => {
+  console.log(`📥 ${req.method} ${req.path} - ${new Date().toLocaleTimeString()}`);
+  console.log('Headers:', req.headers);
+  next();
+});
+
+// VERIFICAÇÃO DO ARQUIVO products.json na inicialização
 async function initializeProductsFile() {
   try {
     await fs.access('./data/products.json');
@@ -70,7 +77,7 @@ async function initializeProductsFile() {
   }
 }
 
-// ROTAS DE PRODUTOS - EXATAMENTE COMO ESTAVAM
+// ROTAS DE PRODUTOS - DEFINIDAS ANTES das rotas de auth
 app.get('/products', async (req, res) => {
   console.log('🎯 Rota GET /products chamada');
   try {
@@ -141,7 +148,7 @@ app.post('/products', async (req, res) => {
   }
 });
 
-// ROTAS DE EVENTOS - EXATAMENTE COMO ESTAVAM + apenas bolosDetalhados
+// ROTAS DE EVENTOS (COM ADIÇÕES: produto, peso, descricao)
 app.get('/events', async (req, res) => {
   const { search, max } = req.query;
   const eventsFileContent = await fs.readFile('./data/events.json');
@@ -149,7 +156,7 @@ app.get('/events', async (req, res) => {
 
   if (search) {
     events = events.filter((event) => {
-      const searchableText = `${event.title} ${event.description} ${event.address}`;
+      const searchableText = `${event.title} ${event.description} ${event.address} ${event.produto || ''} ${event.descricao || ''}`;
       return searchableText.toLowerCase().includes(search.toLowerCase());
     });
   }
@@ -163,8 +170,9 @@ app.get('/events', async (req, res) => {
       id: event.id,
       title: event.title,
       description: event.description,
-      products: event.products || '',
-      bolosDetalhados: event.bolosDetalhados || '', // ÚNICA ADIÇÃO
+      produto: event.produto || '', // NOVO CAMPO
+      peso: event.peso || '', // NOVO CAMPO
+      descricao: event.descricao || '', // NOVO CAMPO
       date: event.date,
       time: event.time,
       address: event.address,
@@ -197,6 +205,7 @@ app.post('/events', async (req, res) => {
     return res.status(400).json({ message: 'Event is required' });
   }
 
+  // Validação básica (mantida igual) + validação dos novos campos
   if (
     !event.title?.trim() ||
     !event.date?.trim() ||
@@ -214,11 +223,16 @@ app.post('/events', async (req, res) => {
   const newEvent = {
     id: Math.round(Math.random() * 10000).toString(),
     ...event,
+    // Garantir que os novos campos existam
+    produto: event.produto || '',
+    peso: event.peso || '',
+    descricao: event.descricao || '',
   };
 
   events.push(newEvent);
   await fs.writeFile('./data/events.json', JSON.stringify(events));
 
+  console.log('✅ Evento criado com produto:', newEvent.produto);
   res.json({ event: newEvent });
 });
 
@@ -249,12 +263,59 @@ app.put('/events/:id', async (req, res) => {
     return res.status(404).json({ message: 'Event not found' });
   }
 
-  events[eventIndex] = { id, ...event };
+  // Atualiza o evento mantendo os novos campos
+  events[eventIndex] = { 
+    id, 
+    ...event,
+    produto: event.produto || events[eventIndex].produto || '',
+    peso: event.peso || events[eventIndex].peso || '',
+    descricao: event.descricao || events[eventIndex].descricao || '',
+  };
+  
   await fs.writeFile('./data/events.json', JSON.stringify(events));
 
+  console.log('✅ Evento atualizado:', events[eventIndex]);
   setTimeout(() => {
     res.json({ event: events[eventIndex] });
   }, 1000);
+});
+
+// NOVA ROTA - Atualizar apenas o produto de um evento
+app.put('/events/:id/produto', async (req, res) => {
+  const { id } = req.params;
+  const { produto, peso, descricao } = req.body;
+
+  console.log(`🎯 Atualizando produto do evento ${id}:`, { produto, peso, descricao });
+
+  try {
+    const eventsFileContent = await fs.readFile('./data/events.json');
+    const events = JSON.parse(eventsFileContent);
+
+    const eventIndex = events.findIndex((event) => event.id === id);
+
+    if (eventIndex === -1) {
+      return res.status(404).json({ message: 'Event not found' });
+    }
+
+    // Atualiza apenas os campos de produto
+    events[eventIndex].produto = produto || events[eventIndex].produto || '';
+    events[eventIndex].peso = peso || events[eventIndex].peso || '';
+    events[eventIndex].descricao = descricao || events[eventIndex].descricao || '';
+    
+    await fs.writeFile('./data/events.json', JSON.stringify(events));
+
+    console.log('✅ Produto do evento atualizado:', events[eventIndex]);
+    res.json({ 
+      message: 'Produto atualizado com sucesso',
+      event: events[eventIndex] 
+    });
+  } catch (error) {
+    console.error('❌ Erro ao atualizar produto:', error);
+    res.status(500).json({ 
+      message: 'Erro ao atualizar produto',
+      error: error.message 
+    });
+  }
 });
 
 app.delete('/events/:id', async (req, res) => {
@@ -275,10 +336,9 @@ app.delete('/events/:id', async (req, res) => {
   }, 1000);
 });
 
-// ROTAS DE AUTH - EXATAMENTE COMO ESTAVAM
-app.use('/auth', router);
+app.use(router); 
 
-// MIDDLEWARE para capturar rotas não encontradas - COMO ESTAVA
+// MIDDLEWARE para capturar rotas não encontradas
 app.use('*', (req, res) => {
   console.log(`❌ Rota não encontrada: ${req.method} ${req.originalUrl}`);
   res.status(404).json({ 
@@ -288,7 +348,7 @@ app.use('*', (req, res) => {
   });
 });
 
-// INICIALIZAÇÃO DO SERVIDOR - COMO ESTAVA
+// INICIALIZAÇÃO DO SERVIDOR
 async function startServer() {
   try {
     await initializeProductsFile();
@@ -302,7 +362,10 @@ async function startServer() {
       console.log('   POST /events');
       console.log('   GET  /events/:id');
       console.log('   PUT  /events/:id');
+      console.log('   PUT  /events/:id/produto'); // NOVA ROTA
       console.log('   DELETE /events/:id');
+      console.log('   POST /signup');
+      console.log('   POST /login');
     });
   } catch (error) {
     console.error('❌ Erro ao inicializar servidor:', error);
