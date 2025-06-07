@@ -22,8 +22,38 @@ export default function EventItem({ event }) {
               : ""
     }`;
 
-  // Extrai produtos e descrição
-  const products = event.products ? event.products.split('\n').filter(p => p.trim()) : [];
+  // CORRIGIDO: Extrai produtos de múltiplas fontes
+  let products = [];
+  
+  // Primeiro tenta buscar dos novos campos (produto, peso, descricao)
+  if (event.produto || event.peso || event.descricao) {
+    const produtoInfo = [];
+    if (event.produto) produtoInfo.push(event.produto);
+    if (event.peso) produtoInfo.push(`(${event.peso})`);
+    if (event.descricao) produtoInfo.push(`- ${event.descricao}`);
+    products = [produtoInfo.join(' ')];
+  }
+  // Se não tem novos campos, tenta o campo products original
+  else if (event.products) {
+    products = event.products.split('\n').filter(p => p.trim());
+  }
+  // Se não tem products, tenta bolosDetalhados
+  else if (event.bolosDetalhados) {
+    try {
+      const bolosDetalhados = JSON.parse(event.bolosDetalhados);
+      products = bolosDetalhados.map(bolo => {
+        const parts = [];
+        if (bolo.nome) parts.push(bolo.nome);
+        if (bolo.peso) parts.push(`(${bolo.peso})`);
+        if (bolo.descricao) parts.push(`- ${bolo.descricao}`);
+        return parts.join(' ');
+      });
+    } catch (error) {
+      console.error('Erro ao parsear bolosDetalhados:', error);
+      products = [];
+    }
+  }
+
   const description = event.description || '';
 
   // Para preview resumido
@@ -39,10 +69,10 @@ export default function EventItem({ event }) {
           <h2>{event.title}</h2>
           <p className="event-item-date">{formattedDate}</p>
           
-          {/* Produtos */}
+          {/* CORRIGIDO: Produtos sempre visíveis quando existem */}
           {products.length > 0 && (
             <div className="event-item-products">
-              {products.length <= 0 ? (
+              {products.length <= 3 ? (
                 <ProductsList products={products} />
               ) : (
                 <p className="event-item-description">

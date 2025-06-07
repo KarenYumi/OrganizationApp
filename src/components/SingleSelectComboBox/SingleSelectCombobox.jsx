@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const SingleSelectCombobox = ({
   options = [],
@@ -18,6 +18,12 @@ const SingleSelectCombobox = ({
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [filteredOptions, setFilteredOptions] = useState(options);
+  const [focusedIndex, setFocusedIndex] = useState(-1);
+  
+  // CORRIGIDO: Referências para controle do foco
+  const containerRef = useRef(null);
+  const inputRef = useRef(null);
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
     setFilteredOptions(options);
@@ -44,7 +50,7 @@ const SingleSelectCombobox = ({
     return getDisplayText(item);
   };
 
-  // Função para filtrar as opções conforme o usuário digita
+  // CORRIGIDO: Função para filtrar as opções
   const handleInputChange = (e) => {
     const newValue = e.target.value;
     setInputValue(newValue);
@@ -58,19 +64,22 @@ const SingleSelectCombobox = ({
     });
 
     setFilteredOptions(filtered);
+    setFocusedIndex(-1);
     setIsOpen(true);
   };
 
-  // Função para lidar com as teclas pressionadas
+  // CORRIGIDO: Função para lidar com as teclas
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
 
       if (isOpen) {
-        if (filteredOptions.length > 0) {
-          selectOption(filteredOptions[0]);
+        if (focusedIndex >= 0 && focusedIndex < filteredOptions.length) {
+          selectOption(filteredOptions[focusedIndex]);
         } else if (isNewOption) {
           createNewOption();
+        } else if (filteredOptions.length > 0) {
+          selectOption(filteredOptions[0]);
         }
       } else {
         setIsOpen(true);
@@ -78,9 +87,21 @@ const SingleSelectCombobox = ({
     } else if (e.key === 'Escape') {
       setIsOpen(false);
       setInputValue(getDisplayText(selectedItem));
+      setFocusedIndex(-1);
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setIsOpen(true);
+      if (!isOpen) {
+        setIsOpen(true);
+      } else {
+        const maxIndex = filteredOptions.length + (isNewOption ? 0 : -1);
+        setFocusedIndex(prev => (prev < maxIndex ? prev + 1 : 0));
+      }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (isOpen) {
+        const maxIndex = filteredOptions.length + (isNewOption ? 0 : -1);
+        setFocusedIndex(prev => (prev > 0 ? prev - 1 : maxIndex));
+      }
     }
   };
 
@@ -88,8 +109,9 @@ const SingleSelectCombobox = ({
   const selectOption = (option) => {
     const displayText = getDisplayText(option);
     setInputValue(displayText);
-    onChange(option); // Passa o item selecionado
+    onChange(option);
     setIsOpen(false);
+    setFocusedIndex(-1);
     setFilteredOptions(options);
   };
 
@@ -101,19 +123,19 @@ const SingleSelectCombobox = ({
     if (newItem) {
       if (onCreateNew && typeof onCreateNew === 'function') {
         onCreateNew(newItem);
-        // Seleciona automaticamente o item criado
-        onChange(newItem);
-      } else {
-        onChange(newItem);
       }
+      onChange(newItem);
       setInputValue(newItem);
     }
+    setFocusedIndex(-1);
   };
 
   // Função para limpar seleção
   const clearSelection = () => {
     setInputValue('');
     onChange('');
+    setFocusedIndex(-1);
+    inputRef.current?.focus();
   };
 
   // Verifica se é uma nova opção
@@ -121,56 +143,56 @@ const SingleSelectCombobox = ({
     !options.some(item => getDisplayText(item) === inputValue.trim()) &&
     getDisplayText(selectedItem) !== inputValue.trim();
 
-  // Função para lidar com o blur (perda de foco)
+  // CORRIGIDO: Função para lidar com o blur
   const handleBlur = (e) => {
-    const relatedTarget = e.relatedTarget;
-    if (!relatedTarget || !relatedTarget.closest('[data-dropdown]')) {
-      setTimeout(() => {
-        setIsOpen(false);
-        // Se não selecionou nada válido, volta para o valor original
-        if (!selectedItem) {
-          setInputValue('');
-        } else {
-          setInputValue(getDisplayText(selectedItem));
-        }
-      }, 150);
+    // Verifica se o clique foi dentro do container
+    if (containerRef.current && containerRef.current.contains(e.relatedTarget)) {
+      return;
     }
+    
+    setTimeout(() => {
+      setIsOpen(false);
+      setFocusedIndex(-1);
+      // Se não selecionou nada válido, volta para o valor original
+      if (!selectedItem) {
+        setInputValue('');
+      } else {
+        setInputValue(getDisplayText(selectedItem));
+      }
+    }, 150);
   };
 
-  // Função para lidar com o foco
+  // CORRIGIDO: Função para lidar com o foco
   const handleFocus = () => {
     setIsOpen(true);
-    // Limpa o input para facilitar a busca
-    setInputValue('');
-  };
-
-  // Funções para os efeitos hover
-  const handleClearButtonMouseOver = (e) => {
-    e.target.style.backgroundColor = '#f0f0f0';
-  };
-
-  const handleClearButtonMouseOut = (e) => {
-    e.target.style.backgroundColor = 'transparent';
-  };
-
-  const handleCreateOptionMouseOver = (e) => {
-    e.target.style.backgroundColor = '#f0f8ff';
-  };
-
-  const handleCreateOptionMouseOut = (e) => {
-    e.target.style.backgroundColor = 'transparent';
-  };
-
-  const handleOptionMouseOver = (e, isSelected) => {
-    if (!isSelected) {
-      e.target.style.backgroundColor = '#f5f5f5';
+    // Mantém o valor atual para facilitar a edição
+    if (!inputValue && selectedItem) {
+      setInputValue(getDisplayText(selectedItem));
     }
   };
 
-  const handleOptionMouseOut = (e, isSelected) => {
-    if (!isSelected) {
-      e.target.style.backgroundColor = 'transparent';
+  // CORRIGIDO: Função para toggle do dropdown
+  const toggleDropdown = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsOpen(!isOpen);
+    if (!isOpen) {
+      inputRef.current?.focus();
     }
+  };
+
+  // CORRIGIDO: Função para clique na opção
+  const handleOptionClick = (option, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    selectOption(option);
+  };
+
+  // CORRIGIDO: Função para clique na opção de criar
+  const handleCreateClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    createNewOption();
   };
 
   // Estilos CSS inline
@@ -188,7 +210,8 @@ const SingleSelectCombobox = ({
     border: '1px solid #2f82ff',
     borderRadius: '4px',
     fontSize: '1rem',
-    fontFamily: 'inherit'
+    fontFamily: 'inherit',
+    outline: 'none'
   };
 
   const buttonContainerStyle = {
@@ -211,7 +234,8 @@ const SingleSelectCombobox = ({
     width: '20px',
     height: '20px',
     borderRadius: '50%',
-    fontSize: '16px'
+    fontSize: '16px',
+    transition: 'background-color 0.2s'
   };
 
   const chevronButtonStyle = {
@@ -221,12 +245,14 @@ const SingleSelectCombobox = ({
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    padding: '2px',
+    transition: 'color 0.2s'
   };
 
   const dropdownStyle = {
     position: 'absolute',
-    zIndex: 10,
+    zIndex: 1000,
     width: '100%',
     marginTop: '0.25rem',
     backgroundColor: 'white',
@@ -244,16 +270,18 @@ const SingleSelectCombobox = ({
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
-    color: '#ff6b35'
+    color: '#ff6b35',
+    backgroundColor: focusedIndex === -1 ? '#f0f8ff' : 'transparent'
   };
 
-  const optionStyle = {
+  const optionStyle = (index) => ({
     padding: '0.5rem 0.75rem',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-between'
-  };
+    justifyContent: 'space-between',
+    backgroundColor: focusedIndex === index ? '#f5f5f5' : 'transparent'
+  });
 
   const selectedOptionStyle = {
     backgroundColor: '#e1e6f0',
@@ -267,10 +295,11 @@ const SingleSelectCombobox = ({
   };
 
   return (
-    <div style={containerStyle}>
+    <div ref={containerRef} style={containerStyle}>
       {/* Input principal */}
       <div style={inputContainerStyle}>
         <input
+          ref={inputRef}
           type="text"
           value={inputValue}
           onChange={handleInputChange}
@@ -280,6 +309,7 @@ const SingleSelectCombobox = ({
           placeholder={placeholder}
           style={inputStyle}
           className={className}
+          autoComplete="off"
         />
         <div style={buttonContainerStyle}>
           {/* Botão para limpar */}
@@ -288,8 +318,8 @@ const SingleSelectCombobox = ({
               type="button"
               onClick={clearSelection}
               style={clearButtonStyle}
-              onMouseOver={handleClearButtonMouseOver}
-              onMouseOut={handleClearButtonMouseOut}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#f0f0f0'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
               title="Limpar seleção"
             >
               ×
@@ -298,24 +328,31 @@ const SingleSelectCombobox = ({
           {/* Botão dropdown */}
           <button
             type="button"
-            onClick={() => setIsOpen(!isOpen)}
+            onClick={toggleDropdown}
             style={chevronButtonStyle}
+            onMouseEnter={(e) => e.target.style.color = '#333'}
+            onMouseLeave={(e) => e.target.style.color = '#666'}
           >
-            ▼
+            {isOpen ? '▲' : '▼'}
           </button>
         </div>
       </div>
 
       {/* Dropdown */}
       {isOpen && (
-        <div data-dropdown style={dropdownStyle}>
+        <div ref={dropdownRef} style={dropdownStyle}>
           {/* Opção para criar novo item */}
           {isNewOption && (
             <div
-              onClick={createNewOption}
+              onClick={handleCreateClick}
               style={createOptionStyle}
-              onMouseOver={handleCreateOptionMouseOver}
-              onMouseOut={handleCreateOptionMouseOut}
+              onMouseEnter={(e) => {
+                setFocusedIndex(-1);
+                e.target.style.backgroundColor = '#f0f8ff';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = focusedIndex === -1 ? '#f0f8ff' : 'transparent';
+              }}
             >
               <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>+</span>
               <span>{createText}: "{inputValue.trim()}"</span>
@@ -326,17 +363,18 @@ const SingleSelectCombobox = ({
           {filteredOptions.map((option, index) => {
             const displayText = getDisplayText(option);
             const isSelected = getDisplayText(selectedItem) === displayText;
+            const isFocused = focusedIndex === index;
 
             return (
               <div
                 key={index}
-                onClick={() => selectOption(option)}
+                onClick={(e) => handleOptionClick(option, e)}
                 style={{
-                  ...optionStyle,
-                  ...(isSelected ? selectedOptionStyle : {})
+                  ...optionStyle(index),
+                  ...(isSelected ? selectedOptionStyle : {}),
+                  ...(isFocused ? { backgroundColor: '#f5f5f5' } : {})
                 }}
-                onMouseOver={(e) => handleOptionMouseOver(e, isSelected)}
-                onMouseOut={(e) => handleOptionMouseOut(e, isSelected)}
+                onMouseEnter={() => setFocusedIndex(index)}
               >
                 <span>{displayText}</span>
                 {isSelected && <span style={{ color: '#2f82ff', fontWeight: 'bold' }}>✓</span>}

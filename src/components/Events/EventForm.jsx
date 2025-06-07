@@ -11,10 +11,10 @@ const PRODUTOS_FALLBACK = [
 ];
 
 const PESOS_DISPONIVEIS = [
+  '2kg',
   '5kg',
   '10kg',
-  '15kg',
-  '20kg'
+  '15kg'
 ];
 
 export default function EventForm({ inputData, onSubmit, children }) {
@@ -24,21 +24,21 @@ export default function EventForm({ inputData, onSubmit, children }) {
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [error, setError] = useState(null);
 
-  // Estado para gerenciar os bolos do pedido (modificação principal)
+  // Estado para gerenciar os bolos do pedido
   const [bolosPedido, setBolosPedido] = useState([
     { 
       id: 1, 
-      bolo: '', // String simples para SingleSelectCombobox
-      peso: '', // String simples para SingleSelectCombobox
+      bolo: '',
+      peso: '',
       descricao: ''
     }
   ]);
 
-  // Função para buscar produtos do backend
+  // CORRIGIDO: Função para buscar produtos do backend (URL local)
   const fetchProducts = async () => {
     try {
-      console.log('Tentando buscar produtos...');
-      const response = await fetch('https://organizationapp-backend.onrender.com/products');
+      console.log('Tentando buscar produtos do servidor local...');
+      const response = await fetch('http://localhost:3000/products');
       
       if (!response.ok) {
         throw new Error(`Erro ${response.status}: ${response.statusText}`);
@@ -57,16 +57,18 @@ export default function EventForm({ inputData, onSubmit, children }) {
     } catch (error) {
       console.error('Erro ao buscar produtos:', error);
       setError(error.message);
+      // Mantém a lista fallback em caso de erro
+      setAvailableProducts(PRODUTOS_FALLBACK);
     } finally {
       setIsLoadingProducts(false);
     }
   };
 
-  // Função para criar novo produto
+  // CORRIGIDO: Função para criar novo produto (URL local)
   const createNewProduct = async (productName) => {
     try {
       console.log('Criando produto:', productName);
-      const response = await fetch('https://organizationapp-backend.onrender.com/products', {
+      const response = await fetch('http://localhost:3000/products', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -83,11 +85,24 @@ export default function EventForm({ inputData, onSubmit, children }) {
 
       const data = await response.json();
       console.log('Produto criado:', data);
-      setAvailableProducts(prev => [...prev, productName]);
+      
+      // Adiciona o produto à lista local
+      setAvailableProducts(prev => {
+        if (!prev.includes(productName)) {
+          return [...prev, productName];
+        }
+        return prev;
+      });
       
     } catch (error) {
       console.error('Erro ao criar produto:', error);
-      setAvailableProducts(prev => [...prev, productName]);
+      // Mesmo com erro, adiciona à lista local
+      setAvailableProducts(prev => {
+        if (!prev.includes(productName)) {
+          return [...prev, productName];
+        }
+        return prev;
+      });
     }
   };
 
@@ -98,8 +113,8 @@ export default function EventForm({ inputData, onSubmit, children }) {
       ...bolosPedido,
       { 
         id: novoId, 
-        bolo: '', // String vazia para SingleSelectCombobox
-        peso: '', // String vazia para SingleSelectCombobox
+        bolo: '',
+        peso: '',
         descricao: ''
       }
     ]);
@@ -135,29 +150,41 @@ export default function EventForm({ inputData, onSubmit, children }) {
     setStatus(inputData?.status ?? '');
     fetchProducts();
     
-    // Se está editando um pedido existente
+    // CORRIGIDO: Melhor tratamento dos dados existentes
     if (inputData) {
-      if (inputData.bolosDetalhados) {
-        // Novo formato - já tem dados detalhados
+      // Primeiro tenta os novos campos individuais
+      if (inputData.produto || inputData.peso || inputData.descricao) {
+        setBolosPedido([{
+          id: 1,
+          bolo: inputData.produto || '',
+          peso: inputData.peso || '',
+          descricao: inputData.descricao || ''
+        }]);
+      }
+      // Depois tenta bolosDetalhados
+      else if (inputData.bolosDetalhados) {
         try {
           const bolosDetalhados = JSON.parse(inputData.bolosDetalhados);
           const bolosFormatados = bolosDetalhados.map((bolo, index) => ({
             id: index + 1,
-            bolo: bolo.nome || bolo.bolo || '', // String simples
-            peso: bolo.peso || '', // String simples
+            bolo: bolo.nome || bolo.bolo || '',
+            peso: bolo.peso || '',
             descricao: bolo.descricao || ''
           }));
-          setBolosPedido(bolosFormatados);
+          if (bolosFormatados.length > 0) {
+            setBolosPedido(bolosFormatados);
+          }
         } catch (error) {
           console.error('Erro ao parsear bolos detalhados:', error);
         }
-      } else if (inputData.products) {
-        // Formato antigo - converte produtos para o novo formato
+      }
+      // Por último, tenta o formato antigo
+      else if (inputData.products) {
         const products = inputData.products.split('\n').filter(p => p.trim());
         const bolosExistentes = products.map((produto, index) => ({
           id: index + 1,
-          bolo: produto, // String simples
-          peso: '', // String vazia - será preenchido pelo usuário
+          bolo: produto,
+          peso: '',
           descricao: ''
         }));
         
@@ -174,20 +201,34 @@ export default function EventForm({ inputData, onSubmit, children }) {
     const formData = new FormData(event.target);
     const data = Object.fromEntries(formData);
 
-    // Constrói os produtos no formato detalhado
+    // Constrói os dados dos bolos
     const bolosValidos = bolosPedido.filter(bolo => 
       bolo.bolo && bolo.peso
     );
     
-    // Para manter compatibilidade com o sistema atual
-    data.products = bolosValidos.map(bolo => bolo.bolo).join('\n');
-    
-    // Adiciona dados detalhados dos bolos (NOVO CAMPO)
-    data.bolosDetalhados = JSON.stringify(bolosValidos.map(bolo => ({
-      nome: bolo.bolo,
-      peso: bolo.peso,
-      descricao: bolo.descricao
-    })));
+    // CORRIGIDO: Adicionando os novos campos individuais para o backend
+    if (bolosValidos.length > 0) {
+      // Para compatibilidade com sistema antigo
+      data.products = bolosValidos.map(bolo => bolo.bolo).join('\n');
+      
+      // Novos campos individuais (primeiro bolo)
+      data.produto = bolosValidos[0].bolo;
+      data.peso = bolosValidos[0].peso;
+      data.descricao = bolosValidos[0].descricao;
+      
+      // Campo detalhado para múltiplos bolos
+      data.bolosDetalhados = JSON.stringify(bolosValidos.map(bolo => ({
+        nome: bolo.bolo,
+        peso: bolo.peso,
+        descricao: bolo.descricao
+      })));
+    } else {
+      data.products = '';
+      data.produto = '';
+      data.peso = '';
+      data.descricao = '';
+      data.bolosDetalhados = '[]';
+    }
     
     data.status = status;
 
@@ -209,7 +250,7 @@ export default function EventForm({ inputData, onSubmit, children }) {
         />
       </div>
 
-      {/* SEÇÃO DE SELEÇÃO DE BOLOS MODIFICADA */}
+      {/* SEÇÃO DE SELEÇÃO DE BOLOS */}
       <div className="control">
         <label>Seleção de Bolos</label>
         
@@ -250,7 +291,19 @@ export default function EventForm({ inputData, onSubmit, children }) {
                   <button
                     type="button"
                     onClick={() => removerBolo(boloItem.id)}
-                    className="btn-remover-bolo"
+                    style={{
+                      background: '#dc3545',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '30px',
+                      height: '30px',
+                      cursor: 'pointer',
+                      fontSize: '1.2rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
                     title="Remover bolo"
                   >
                     ×
@@ -258,7 +311,7 @@ export default function EventForm({ inputData, onSubmit, children }) {
                 )}
               </div>
 
-              {/* Seleção de Bolo - USANDO SingleSelectCombobox */}
+              {/* Seleção de Bolo */}
               <div className="bolo-field" style={{ marginBottom: '1rem' }}>
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
                   Escolher Bolo *
@@ -281,7 +334,7 @@ export default function EventForm({ inputData, onSubmit, children }) {
                 )}
               </div>
 
-              {/* Seleção de Peso - USANDO SingleSelectCombobox */}
+              {/* Seleção de Peso */}
               <div className="peso-field" style={{ marginBottom: '1rem' }}>
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
                   Escolher Peso *
@@ -331,7 +384,18 @@ export default function EventForm({ inputData, onSubmit, children }) {
             <button
               type="button"
               onClick={adicionarBolo}
-              className="btn-adicionar-bolo"
+              style={{
+                background: '#28a745',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '0.75rem 1.5rem',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}
             >
               <span style={{ fontSize: '1.2rem' }}>+</span>
               Adicionar mais bolos
@@ -350,7 +414,7 @@ export default function EventForm({ inputData, onSubmit, children }) {
         </div>
       </div>
 
-      {/* Campo de observações gerais (mantido como estava) */}
+      {/* Campo de observações gerais */}
       <div className="control">
         <label htmlFor="description">Observações Gerais do Pedido</label>
         <textarea
