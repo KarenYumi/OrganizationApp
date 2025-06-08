@@ -110,7 +110,7 @@ export default function EventItem({ event }) {
                 marginBottom: '0.75rem',
                 fontSize: '0.9rem'
               }}>
-                Bolos do Pedido ({bolosValidos.length}):
+                Bolos do Pedido:
               </div>
               
               {bolosValidos.map((bolo, index) => (
@@ -203,7 +203,7 @@ export default function EventItem({ event }) {
               borderRadius: '4px',
               borderLeft: '3px solid #28a745'
             }}>
-              <strong style={{ color: '#28a745' }}>Observações:</strong> {
+              <strong style={{ color: '#28a745' }}>Obs:</strong> {
                 description.length > 100 
                   ? description.substring(0, 100) + '...' 
                   : description
@@ -212,22 +212,7 @@ export default function EventItem({ event }) {
           )}
 
           {/* Endereço resumido */}
-          {event.address && (
-            <div style={{ 
-              fontSize: '0.85rem',
-              color: '#666',
-              marginTop: '0.5rem',
-              backgroundColor: '#fff8e1',
-              padding: '0.3rem 0.5rem',
-              borderRadius: '4px',
-              borderLeft: '2px solid #ff9800'
-            }}>
-              <strong>Endereço:</strong> {event.address.length > 50 
-                ? event.address.substring(0, 50) + '...' 
-                : event.address
-              }
-            </div>
-          )}
+
         </div>
         
         <div>
