@@ -1,246 +1,196 @@
 import { useState, useEffect } from 'react';
 import { SingleSelectCombobox } from '../SingleSelectComboBox/SingleSelectCombobox';
 
-// Lista temporária caso o backend não funcione
-const PRODUTOS_FALLBACK = [
+// Lista de produtos padrão
+const PRODUTOS_PADRAO = [
   'Bolo de Chocolate',
-  'Bolo de Cenoura', 
+  'Bolo de Cenoura',
   'Bolo de Coco',
   'Bolo de Morango',
-  'Bolo Red Velvet'
+  'Bolo Red Velvet',
+  'Bolo de Limão',
+  'Bolo de Laranja'
 ];
 
-const PESOS_DISPONIVEIS = [
-  '2kg',
-  '5kg',
-  '10kg',
-  '15kg'
+// Lista de pesos padrão
+const PESOS_PADRAO = [
+  '0.5kg', '1kg', '1.5kg', '2kg', '2.5kg', '3kg', '4kg', '5kg'
 ];
 
 export default function EventForm({ inputData, onSubmit, children }) {
   const [status, setStatus] = useState(inputData?.status ?? '');
-  const [availableProducts, setAvailableProducts] = useState(PRODUTOS_FALLBACK);
-  const [pesosDisponiveis, setPesosDisponiveis] = useState(PESOS_DISPONIVEIS);
-  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
-  const [error, setError] = useState(null);
-
-  // Estado para gerenciar os bolos do pedido
-  const [bolosPedido, setBolosPedido] = useState([
-    { 
-      id: 1, 
-      bolo: '',
-      peso: '',
-      descricao: ''
-    }
+  const [produtos, setProdutos] = useState(PRODUTOS_PADRAO);
+  const [pesos] = useState(PESOS_PADRAO);
+  
+  // Estado para múltiplos bolos
+  const [bolos, setBolos] = useState([
+    { id: 1, produto: '', peso: '', descricao: '' }
   ]);
 
-  // CORRIGIDO: Função para buscar produtos do backend (URL local)
-  const fetchProducts = async () => {
+  // Buscar produtos do Render
+  const carregarProdutos = async () => {
     try {
-      console.log('Tentando buscar produtos do servidor local...');
-      const response = await fetch('http://localhost:3000/products');
+      console.log('📦 Carregando produtos do Render...');
+      const response = await fetch('https://organizationapp-backend.onrender.com/products');
       
-      if (!response.ok) {
-        throw new Error(`Erro ${response.status}: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      console.log('Produtos recebidos:', data);
-      
-      if (data.products && Array.isArray(data.products)) {
-        const productNames = data.products.map(p => p.name);
-        setAvailableProducts(productNames);
-        console.log('Produtos processados:', productNames);
-      } else {
-        console.warn('Formato de dados inesperado:', data);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.products && Array.isArray(data.products)) {
+          const produtosDoBanco = data.products.map(p => p.name);
+          const todosProdutos = [...new Set([...PRODUTOS_PADRAO, ...produtosDoBanco])];
+          setProdutos(todosProdutos);
+          console.log('✅ Produtos carregados:', todosProdutos.length);
+        }
       }
     } catch (error) {
-      console.error('Erro ao buscar produtos:', error);
-      setError(error.message);
-      // Mantém a lista fallback em caso de erro
-      setAvailableProducts(PRODUTOS_FALLBACK);
-    } finally {
-      setIsLoadingProducts(false);
+      console.error('❌ Erro ao carregar produtos:', error);
+      setProdutos(PRODUTOS_PADRAO);
     }
   };
 
-  // CORRIGIDO: Função para criar novo produto (URL local)
-  const createNewProduct = async (productName) => {
+  // Criar novo produto
+  const criarProduto = async (nomeProduto) => {
     try {
-      console.log('Criando produto:', productName);
-      const response = await fetch('http://localhost:3000/products', {
+      console.log('🔥 Criando produto:', nomeProduto);
+      
+      const response = await fetch('https://organizationapp-backend.onrender.com/products', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: productName,
-          category: 'personalizado'
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          name: nomeProduto, 
+          category: 'personalizado' 
         })
       });
-
-      if (!response.ok) {
-        throw new Error(`Erro ao criar produto: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log('Produto criado:', data);
       
-      // Adiciona o produto à lista local
-      setAvailableProducts(prev => {
-        if (!prev.includes(productName)) {
-          return [...prev, productName];
+      if (response.ok) {
+        console.log('✅ Produto criado no Render!');
+        // Adiciona à lista local
+        if (!produtos.includes(nomeProduto)) {
+          setProdutos([...produtos, nomeProduto]);
         }
-        return prev;
-      });
-      
+        alert(`✅ Produto "${nomeProduto}" criado!`);
+      } else {
+        throw new Error('Erro no servidor');
+      }
     } catch (error) {
-      console.error('Erro ao criar produto:', error);
-      // Mesmo com erro, adiciona à lista local
-      setAvailableProducts(prev => {
-        if (!prev.includes(productName)) {
-          return [...prev, productName];
-        }
-        return prev;
-      });
-    }
-  };
-
-  // Funções para gerenciar bolos
-  const adicionarBolo = () => {
-    const novoId = Math.max(...bolosPedido.map(b => b.id)) + 1;
-    setBolosPedido([
-      ...bolosPedido,
-      { 
-        id: novoId, 
-        bolo: '',
-        peso: '',
-        descricao: ''
+      console.error('❌ Erro ao criar produto:', error);
+      // Adiciona localmente mesmo com erro
+      if (!produtos.includes(nomeProduto)) {
+        setProdutos([...produtos, nomeProduto]);
       }
-    ]);
-  };
-
-  const removerBolo = (id) => {
-    if (bolosPedido.length > 1) {
-      setBolosPedido(bolosPedido.filter(b => b.id !== id));
+      alert(`❌ Erro no servidor, mas produto "${nomeProduto}" foi adicionado localmente.`);
     }
   };
 
-  const atualizarBolo = (id, campo, valor) => {
-    setBolosPedido(bolosPedido.map(bolo => 
-      bolo.id === id ? { ...bolo, [campo]: valor } : bolo
-    ));
-  };
-
-  // Função para quando um novo produto é criado
-  const handleCreateNewProduct = (newProductName) => {
-    console.log('Criando novo produto:', newProductName);
-    createNewProduct(newProductName);
-  };
-
-  // Função para quando um novo peso é criado
-  const handleCreateNewPeso = (newPeso) => {
-    console.log('Criando novo peso:', newPeso);
-    if (newPeso && !pesosDisponiveis.includes(newPeso)) {
-      setPesosDisponiveis([...pesosDisponiveis, newPeso]);
-    }
-  };
-
+  // Buscar produtos na inicialização
   useEffect(() => {
-    setStatus(inputData?.status ?? '');
-    fetchProducts();
-    
-    // CORRIGIDO: Melhor tratamento dos dados existentes
+    carregarProdutos();
+  }, []);
+
+  // Carregar dados existentes
+  useEffect(() => {
     if (inputData) {
-      // Primeiro tenta os novos campos individuais
-      if (inputData.produto || inputData.peso || inputData.descricao) {
-        setBolosPedido([{
+      setStatus(inputData.status || '');
+      
+      // Se tem produto individual
+      if (inputData.produto) {
+        setBolos([{
           id: 1,
-          bolo: inputData.produto || '',
+          produto: inputData.produto,
           peso: inputData.peso || '',
           descricao: inputData.descricao || ''
         }]);
       }
-      // Depois tenta bolosDetalhados
+      // Se tem bolosDetalhados
       else if (inputData.bolosDetalhados) {
         try {
-          const bolosDetalhados = JSON.parse(inputData.bolosDetalhados);
-          const bolosFormatados = bolosDetalhados.map((bolo, index) => ({
+          const detalhados = JSON.parse(inputData.bolosDetalhados);
+          const bolosCarregados = detalhados.map((bolo, index) => ({
             id: index + 1,
-            bolo: bolo.nome || bolo.bolo || '',
+            produto: bolo.nome || bolo.produto || '',
             peso: bolo.peso || '',
             descricao: bolo.descricao || ''
           }));
-          if (bolosFormatados.length > 0) {
-            setBolosPedido(bolosFormatados);
+          if (bolosCarregados.length > 0) {
+            setBolos(bolosCarregados);
           }
         } catch (error) {
-          console.error('Erro ao parsear bolos detalhados:', error);
+          console.log('Erro ao carregar bolos detalhados');
         }
       }
-      // Por último, tenta o formato antigo
+      // Se tem products (formato antigo)
       else if (inputData.products) {
-        const products = inputData.products.split('\n').filter(p => p.trim());
-        const bolosExistentes = products.map((produto, index) => ({
+        const produtosAntigos = inputData.products.split('\n').filter(p => p.trim());
+        const bolosAntigos = produtosAntigos.map((produto, index) => ({
           id: index + 1,
-          bolo: produto,
+          produto: produto,
           peso: '',
           descricao: ''
         }));
-        
-        if (bolosExistentes.length > 0) {
-          setBolosPedido(bolosExistentes);
+        if (bolosAntigos.length > 0) {
+          setBolos(bolosAntigos);
         }
       }
     }
   }, [inputData]);
 
-  function handleSubmit(event) {
-    event.preventDefault();
+  const adicionarBolo = () => {
+    const novoId = Math.max(...bolos.map(b => b.id)) + 1;
+    setBolos([...bolos, { id: novoId, produto: '', peso: '', descricao: '' }]);
+  };
 
+  const removerBolo = (id) => {
+    if (bolos.length > 1) {
+      setBolos(bolos.filter(b => b.id !== id));
+    }
+  };
+
+  const atualizarBolo = (id, campo, valor) => {
+    setBolos(bolos.map(bolo => 
+      bolo.id === id ? { ...bolo, [campo]: valor } : bolo
+    ));
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    
     const formData = new FormData(event.target);
     const data = Object.fromEntries(formData);
-
-    // Constrói os dados dos bolos
-    const bolosValidos = bolosPedido.filter(bolo => 
-      bolo.bolo && bolo.peso
-    );
     
-    // CORRIGIDO: Adicionando os novos campos individuais para o backend
+    // Bolos válidos (com produto e peso)
+    const bolosValidos = bolos.filter(b => b.produto && b.peso);
+    
+    // Compatibilidade - formato antigo
+    data.products = bolosValidos.map(b => b.produto).join('\n');
+    
+    // Novos campos - primeiro bolo
     if (bolosValidos.length > 0) {
-      // Para compatibilidade com sistema antigo
-      data.products = bolosValidos.map(bolo => bolo.bolo).join('\n');
-      
-      // Novos campos individuais (primeiro bolo)
-      data.produto = bolosValidos[0].bolo;
+      data.produto = bolosValidos[0].produto;
       data.peso = bolosValidos[0].peso;
       data.descricao = bolosValidos[0].descricao;
-      
-      // Campo detalhado para múltiplos bolos
-      data.bolosDetalhados = JSON.stringify(bolosValidos.map(bolo => ({
-        nome: bolo.bolo,
-        peso: bolo.peso,
-        descricao: bolo.descricao
-      })));
     } else {
-      data.products = '';
       data.produto = '';
       data.peso = '';
       data.descricao = '';
-      data.bolosDetalhados = '[]';
     }
     
+    // Bolos detalhados - todos os bolos
+    data.bolosDetalhados = JSON.stringify(bolosValidos.map(b => ({
+      nome: b.produto,
+      peso: b.peso,
+      descricao: b.descricao
+    })));
+    
     data.status = status;
-
-    console.log('Dados do formulário:', data);
-    console.log('Bolos detalhados:', bolosValidos);
+    
+    console.log('Enviando dados:', data);
     onSubmit({ event: data });
-  }
+  };
 
   return (
     <form id="event-form" onSubmit={handleSubmit}>
       <div className="control">
-        <label htmlFor="title">Titulo</label>
+        <label htmlFor="title">Título</label>
         <input
           type="text"
           id="title"
@@ -250,34 +200,18 @@ export default function EventForm({ inputData, onSubmit, children }) {
         />
       </div>
 
-      {/* SEÇÃO DE SELEÇÃO DE BOLOS */}
+      {/* SEÇÃO DE BOLOS */}
       <div className="control">
-        <label>Seleção de Bolos</label>
+        <label>Bolos do Pedido</label>
         
-        {error && (
-          <div style={{ 
-            color: 'red', 
-            fontSize: '0.8rem', 
-            marginBottom: '0.5rem',
-            padding: '0.5rem',
-            backgroundColor: '#ffe6e6',
-            borderRadius: '4px',
-            border: '1px solid #ffcccc'
-          }}>
-            Erro: {error} (usando lista padrão)
-          </div>
-        )}
-        
-        {isLoadingProducts && (
-          <div style={{ color: '#666', padding: '0.5rem' }}>
-            Carregando produtos...
-          </div>
-        )}
-
-        {/* Lista de bolos do pedido */}
-        <div className="bolos-container" style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '1rem', marginBottom: '1rem' }}>
-          {bolosPedido.map((boloItem, index) => (
-            <div key={boloItem.id} className="bolo-item" style={{ 
+        <div className="bolos-container" style={{ 
+          border: '1px solid #ddd', 
+          borderRadius: '8px', 
+          padding: '1rem', 
+          marginBottom: '1rem' 
+        }}>
+          {bolos.map((bolo, index) => (
+            <div key={bolo.id} className="bolo-item" style={{ 
               backgroundColor: '#f8f9fa', 
               padding: '1rem', 
               marginBottom: '1rem', 
@@ -285,12 +219,19 @@ export default function EventForm({ inputData, onSubmit, children }) {
               border: '1px solid #e9ecef'
             }}>
               {/* Cabeçalho do bolo */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h4 style={{ margin: 0, color: '#495057' }}>Bolo {index + 1}</h4>
-                {bolosPedido.length > 1 && (
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                marginBottom: '1rem' 
+              }}>
+                <h4 style={{ margin: 0, color: '#495057' }}>
+                  🎂 Bolo {index + 1}
+                </h4>
+                {bolos.length > 1 && (
                   <button
                     type="button"
-                    onClick={() => removerBolo(boloItem.id)}
+                    onClick={() => removerBolo(bolo.id)}
                     style={{
                       background: '#dc3545',
                       color: 'white',
@@ -311,62 +252,67 @@ export default function EventForm({ inputData, onSubmit, children }) {
                 )}
               </div>
 
-              {/* Seleção de Bolo */}
-              <div className="bolo-field" style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-                  Escolher Bolo *
+              {/* PRODUTO */}
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '0.5rem', 
+                  fontWeight: 'bold' 
+                }}>
+                  Produto *
                 </label>
                 <SingleSelectCombobox
-                  options={availableProducts}
-                  selectedItem={boloItem.bolo}
-                  onChange={(selected) => atualizarBolo(boloItem.id, 'bolo', selected)}
-                  onCreateNew={handleCreateNewProduct}
-                  placeholder="Digite ou selecione um bolo..."
-                  createText="Criar novo bolo"
-                  noResultsText="Nenhum bolo encontrado"
+                  options={produtos}
+                  selectedItem={bolo.produto}
+                  onChange={(valor) => atualizarBolo(bolo.id, 'produto', valor)}
+                  onCreateNew={criarProduto}
+                  placeholder="Selecione ou digite um produto..."
                   allowCreate={true}
-                  maxHeight="10rem"
                 />
-                {!boloItem.bolo && (
+                {!bolo.produto && (
                   <div style={{ color: '#dc3545', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-                    Selecione um bolo
+                    Selecione um produto
                   </div>
                 )}
               </div>
 
-              {/* Seleção de Peso */}
-              <div className="peso-field" style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-                  Escolher Peso *
+              {/* PESO */}
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '0.5rem', 
+                  fontWeight: 'bold' 
+                }}>
+                  Peso *
                 </label>
                 <SingleSelectCombobox
-                  options={pesosDisponiveis}
-                  selectedItem={boloItem.peso}
-                  onChange={(selected) => atualizarBolo(boloItem.id, 'peso', selected)}
-                  onCreateNew={handleCreateNewPeso}
-                  placeholder="Digite ou selecione um peso..."
-                  createText="Criar novo peso"
-                  noResultsText="Nenhum peso encontrado"
+                  options={pesos}
+                  selectedItem={bolo.peso}
+                  onChange={(valor) => atualizarBolo(bolo.id, 'peso', valor)}
+                  placeholder="Ex: 2kg"
                   allowCreate={true}
-                  maxHeight="8rem"
                 />
-                {!boloItem.peso && (
+                {!bolo.peso && (
                   <div style={{ color: '#dc3545', fontSize: '0.875rem', marginTop: '0.25rem' }}>
                     Selecione um peso
                   </div>
                 )}
               </div>
 
-              {/* Descrição específica do bolo */}
-              <div className="descricao-field">
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-                  Descrição do Bolo
+              {/* DESCRIÇÃO */}
+              <div>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '0.5rem', 
+                  fontWeight: 'bold' 
+                }}>
+                  Descrição (Opcional)
                 </label>
                 <textarea
-                  value={boloItem.descricao}
-                  onChange={(e) => atualizarBolo(boloItem.id, 'descricao', e.target.value)}
-                  placeholder="Descreva detalhes específicos deste bolo (sabor, decoração, observações...)"
-                  rows={3}
+                  value={bolo.descricao}
+                  onChange={(e) => atualizarBolo(bolo.id, 'descricao', e.target.value)}
+                  placeholder="Detalhes do bolo (decoração, sabor, recheio, etc.)"
+                  rows={2}
                   style={{ 
                     width: '100%', 
                     padding: '0.5rem', 
@@ -379,7 +325,7 @@ export default function EventForm({ inputData, onSubmit, children }) {
             </div>
           ))}
 
-          {/* Botão para adicionar mais bolos */}
+          {/* Botão adicionar bolo */}
           <div style={{ textAlign: 'center', marginTop: '1rem' }}>
             <button
               type="button"
@@ -398,35 +344,35 @@ export default function EventForm({ inputData, onSubmit, children }) {
               }}
             >
               <span style={{ fontSize: '1.2rem' }}>+</span>
-              Adicionar mais bolos
+              Adicionar Mais Bolo
             </button>
           </div>
         </div>
 
-        {/* Debug info */}
+        {/* Info debug */}
         <div style={{ 
           color: '#999', 
           fontSize: '0.75rem',
           marginTop: '0.25rem'
         }}>
-          Produtos disponíveis: {availableProducts.length} | 
-          Bolos no pedido: {bolosPedido.filter(b => b.bolo && b.peso).length}
+          📡 Produtos: {produtos.length} | 
+          🎂 Bolos válidos: {bolos.filter(b => b.produto && b.peso).length}
         </div>
       </div>
 
-      {/* Campo de observações gerais */}
+      {/* Observações gerais */}
       <div className="control">
-        <label htmlFor="description">Observações Gerais do Pedido</label>
+        <label htmlFor="description">Observações Gerais</label>
         <textarea
           id="description"
           name="description"
-          placeholder="Observações gerais sobre o pedido (entrega, pagamento, etc...)"
+          placeholder="Observações sobre entrega, pagamento, etc."
           rows={3}
           defaultValue={inputData?.description ?? ''}
         />
       </div>
 
-      {/* Campos originais mantidos */}
+      {/* Campos originais */}
       <div className="controls-row">
         <div className="control">
           <label htmlFor="date">Data</label>
@@ -438,9 +384,8 @@ export default function EventForm({ inputData, onSubmit, children }) {
             required
           />
         </div>
-
         <div className="control">
-          <label htmlFor="time">Horas</label>
+          <label htmlFor="time">Hora</label>
           <input
             type="time"
             id="time"
@@ -467,7 +412,7 @@ export default function EventForm({ inputData, onSubmit, children }) {
         <select
           name="status"
           id="status"
-          value={status} 
+          value={status}
           onChange={(e) => setStatus(e.target.value)}
           required
         >
