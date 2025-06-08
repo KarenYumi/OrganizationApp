@@ -18,7 +18,7 @@ const PESOS_PADRAO = [
 ];
 
 export default function EventForm({ inputData, onSubmit, children }) {
-  const [status, setStatus] = useState(inputData?.status ?? '');
+  const [status, setStatus] = useState(inputData?.status ?? 'A Fazer');
   const [produtos, setProdutos] = useState(PRODUTOS_PADRAO);
   const [pesos] = useState(PESOS_PADRAO);
   
